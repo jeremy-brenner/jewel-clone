@@ -2,11 +2,16 @@ class Jewel
   constructor: (id) ->
     @loaded = false
     @id = id
-    @material = new THREE.MeshLambertMaterial
-      color: 'blue'
-      ambient: 'blue'
+    color = "##{Math.floor(Math.random()*16777215).toString(16)}"
+    @material = new THREE.MeshPhongMaterial
+      color: color
+      ambient: color
+      shininess: 50
     @loadModel()
   
+  build: ->
+    new THREE.Mesh( @geometry, @material )
+
   modelUrl: ->
     "models/#{@id}.json" 
 
@@ -15,7 +20,6 @@ class Jewel
     json = JSON.parse @req.responseText
     geometry = jsonloader.parse( json.geometries[0].data ).geometry
     @geometry = new THREE.BufferGeometry().fromGeometry geometry
-    @mesh = new THREE.Mesh(@geometry,@material)
     @loaded = true
     @onload()
 
@@ -49,7 +53,10 @@ class Jewels
     @objects = @load()
     for jewel in @objects 
       jewel.onload = @jewelLoaded   
-    
+  
+  random: ->
+    @objects[Math.floor(Math.random() * @objects.length)].build()
+
   load: ->
     new Jewel(id) for id in @list
 

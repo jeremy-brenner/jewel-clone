@@ -11,7 +11,7 @@ class JewelClone
     @jewels.onload = @jewelsLoaded
 
   registerEvents: ->
-    window.addEventListener 'deviceorientation', @updateOrientation 
+    #window.addEventListener 'deviceorientation', @updateOrientation 
 
   realWidth: ->
     window.innerWidth * window.devicePixelRatio
@@ -22,38 +22,35 @@ class JewelClone
   aspect: ->
     window.innerWidth / window.innerHeight
 
-  updateOrientation: (orientation) =>
-    @deviceAlpha = orientation.alpha
-    @deviceGamma = orientation.gamma
-    @deviceBeta = orientation.beta
-
   initThree: ->
     document.body.style.zoom = 1 / window.devicePixelRatio
     @scene = new THREE.Scene()
-    @camera = new THREE.PerspectiveCamera( 75, @aspect(), 0.1, 1000 )
+ #   @camera = new THREE.PerspectiveCamera( 75, @aspect(), 0.1, 1000 )
+    @camera = new THREE.OrthographicCamera( @realWidth() / - 2, @realWidth() / 2, @realHeight() / 2, @realHeight() / - 2, 0, 1000 )
+    @camera.position.z = 100
+    @camera.updateProjectionMatrix()
     @renderer = new THREE.WebGLRenderer
       antialias: true
     @renderer.setSize @realWidth(), @realHeight()
     document.body.appendChild @renderer.domElement 
 
-    @deviceAlpha = null;
-    @deviceGamma = null;
-    @deviceBeta = null;
-    @betaAxis = 'x'
-    @gammaAxis = 'y'
-    @betaAxisInversion = -1
-    @gammaAxisInversion = -1
-
     @scene.add( new THREE.AmbientLight( 0x555555 ) )
     light = new THREE.DirectionalLight( 0xffffff, 1 )
-    light.position.z = 3
-    light.position.y = 1
+    light.position.z = 100
+    light.position.y = 10
     @scene.add( light )
-    @camera.position.z = 3
+
 
   jewelsLoaded: =>
     @logger.log "jewels loaded"
-    @scene.add( @jewels.objects[0].mesh )
+    d = 8
+    s = @realWidth() / d
+    @board = new Grid(d,d,@jewels)
+    
+    @board.object.scale.multiplyScalar(s)
+    @board.object.position.x = -s*((d/2)-0.5)
+    @board.object.position.y = -s*((d/2)-0.5)
+    @scene.add( @board.object )
     @renderLoop(0)
 
   renderLoop: (t) =>
