@@ -168,7 +168,8 @@
       var color;
       this.loaded = false;
       this.id = id;
-      color = "#" + (Math.floor(Math.random() * 16777215).toString(16));
+      this.colors = ['red', 'white', 'lime', 'blue', 'orange', 'purple', 'teal', 'deeppink'];
+      color = this.randomColor();
       this.material = new THREE.MeshPhongMaterial({
         color: color,
         ambient: color,
@@ -176,6 +177,10 @@
       });
       this.loadModel();
     }
+
+    Jewel.prototype.randomColor = function() {
+      return this.colors[Math.floor(Math.random() * this.colors.length)];
+    };
 
     Jewel.prototype.build = function() {
       return new THREE.Mesh(this.geometry, this.material);
@@ -186,11 +191,15 @@
     };
 
     Jewel.prototype.modelLoaded = function() {
-      var geometry, json, jsonloader;
+      var geometry, json, jsonloader, r, rx, ry;
       jsonloader = new THREE.JSONLoader();
       json = JSON.parse(this.req.responseText);
       geometry = jsonloader.parse(json.geometries[0].data).geometry;
       this.geometry = new THREE.BufferGeometry().fromGeometry(geometry);
+      rx = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+      ry = new THREE.Matrix4().makeRotationY(Math.PI / 2);
+      r = new THREE.Matrix4().multiplyMatrices(rx, ry);
+      this.geometry.applyMatrix(rx);
       this.loaded = true;
       return this.onload();
     };
@@ -213,7 +222,7 @@
       this.jewelLoaded = bind(this.jewelLoaded, this);
       var i, jewel, len, ref;
       this.loaded = false;
-      this.list = ['archaic2', 'asterism', 'button', 'litehouse', 'novice3', 'novice6', 'starcut', 'arrow', 'bestilltru', 'cascade', 'novice1', 'novice5', 'novice8'];
+      this.list = ['archaic2', 'asterism', 'button', 'litehouse', 'novice3', 'novice6', 'starcut', 'arrow', 'cascade', 'novice1', 'novice5', 'novice8'];
       this.objects = this.load();
       ref = this.objects;
       for (i = 0, len = ref.length; i < len; i++) {

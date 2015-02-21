@@ -2,13 +2,26 @@ class Jewel
   constructor: (id) ->
     @loaded = false
     @id = id
-    color = "##{Math.floor(Math.random()*16777215).toString(16)}"
+    @colors = [
+      'red'
+      'white'
+      'lime'
+      'blue'
+      'orange'
+      'purple'
+      'teal'
+      'deeppink'
+    ]
+    color = @randomColor()
     @material = new THREE.MeshPhongMaterial
       color: color
       ambient: color
       shininess: 50
     @loadModel()
   
+  randomColor: -> 
+    @colors[Math.floor(Math.random() * @colors.length)]
+
   build: ->
     new THREE.Mesh( @geometry, @material )
 
@@ -20,6 +33,11 @@ class Jewel
     json = JSON.parse @req.responseText
     geometry = jsonloader.parse( json.geometries[0].data ).geometry
     @geometry = new THREE.BufferGeometry().fromGeometry geometry
+    rx = new THREE.Matrix4().makeRotationX( Math.PI/2 )
+    ry = new THREE.Matrix4().makeRotationY( Math.PI/2 )
+    r = new THREE.Matrix4().multiplyMatrices(rx,ry)
+    @geometry.applyMatrix rx
+
     @loaded = true
     @onload()
 
@@ -44,7 +62,6 @@ class Jewels
       'novice6'
       'starcut'
       'arrow'
-      'bestilltru'
       'cascade'
       'novice1'
       'novice5'
