@@ -2,6 +2,7 @@
 class JewelClone
   constructor: ->
     @logger = new Logger()
+    @fps = new Fps()
     @registerEvents()
     @logger.log 'init three'
     @initThree()
@@ -65,17 +66,7 @@ class JewelClone
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     @updateCube()
-    @updateFps(t)
+    @fps.update(t)
     @renderer.render( @scene, @camera )
 
-  updateFps: (t) ->
-    if @frames is 0 
-      @lasttime = t
-    
-    @frames++
-    diff = t - @lasttime
-    if diff > 1000 
-      fps = Math.floor( @frames/(diff/100000) ) / 100
-      document.getElementById('fps').innerText = "fps: #{fps}"
-      @frames = 0
     

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-echo "Compiling Coffee"
-cat coffee/*.coffee | coffee -s -o www/js/index.js > www/js/index.js 
+. scripts/build_coffee.sh
 
 echo "Executing 'cordova run'"
 cordova run

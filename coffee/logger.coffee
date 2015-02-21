@@ -2,6 +2,9 @@
 class Logger
   constructor: ->
     @loglines = []
+    @createDiv()
+    
+  createDiv: ->
     div = document.createElement "div"
     div.id = 'log'
     document.getElementsByTagName('body')[0].appendChild div
