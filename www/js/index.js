@@ -95,10 +95,14 @@
   JewelClone = (function() {
     function JewelClone() {
       this.renderLoop = bind(this.renderLoop, this);
+      this.updateOrientation = bind(this.updateOrientation, this);
       this.jewelsLoaded = bind(this.jewelsLoaded, this);
       this.logger = new Logger();
       this.logger.log("logger started");
       this.fps = new Fps();
+      this.deviceAlpha = 0;
+      this.deviceBeta = 0;
+      this.deviceGamma = 0;
       this.registerEvents();
       this.logger.log('init three');
       this.initThree();
@@ -106,7 +110,9 @@
       this.jewels.onload = this.jewelsLoaded;
     }
 
-    JewelClone.prototype.registerEvents = function() {};
+    JewelClone.prototype.registerEvents = function() {
+      return window.addEventListener('deviceorientation', this.updateOrientation);
+    };
 
     JewelClone.prototype.realWidth = function() {
       return window.innerWidth * window.devicePixelRatio;
@@ -121,7 +127,6 @@
     };
 
     JewelClone.prototype.initThree = function() {
-      var light;
       document.body.style.zoom = 1 / window.devicePixelRatio;
       this.scene = new THREE.Scene();
       this.camera = new THREE.OrthographicCamera(this.realWidth() / -2, this.realWidth() / 2, this.realHeight() / 2, this.realHeight() / -2, 0, 1000);
@@ -133,10 +138,10 @@
       this.renderer.setSize(this.realWidth(), this.realHeight());
       document.body.appendChild(this.renderer.domElement);
       this.scene.add(new THREE.AmbientLight(0x555555));
-      light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.z = 100;
-      light.position.y = 10;
-      return this.scene.add(light);
+      this.light = new THREE.DirectionalLight(0xffffff, 1);
+      this.light.position.z = 100;
+      this.light.position.y = 10;
+      return this.scene.add(this.light);
     };
 
     JewelClone.prototype.jewelsLoaded = function() {
@@ -152,9 +157,21 @@
       return this.renderLoop(0);
     };
 
+    JewelClone.prototype.updateOrientation = function(orientation) {
+      this.deviceAlpha = orientation.alpha;
+      this.deviceGamma = orientation.gamma;
+      return this.deviceBeta = orientation.beta;
+    };
+
+    JewelClone.prototype.updateLight = function() {
+      this.light.position.x = this.deviceGamma * -10;
+      return this.light.position.y = this.deviceBeta * 10;
+    };
+
     JewelClone.prototype.renderLoop = function(t) {
       requestAnimationFrame(this.renderLoop);
       this.fps.update(t);
+      this.updateLight();
       return this.renderer.render(this.scene, this.camera);
     };
 

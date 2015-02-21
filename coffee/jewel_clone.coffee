@@ -4,6 +4,9 @@ class JewelClone
     @logger = new Logger()
     @logger.log "logger started"
     @fps = new Fps()
+    @deviceAlpha = 0
+    @deviceBeta = 0
+    @deviceGamma = 0
     @registerEvents()
     @logger.log 'init three'
     @initThree()
@@ -11,7 +14,7 @@ class JewelClone
     @jewels.onload = @jewelsLoaded
 
   registerEvents: ->
-    #window.addEventListener 'deviceorientation', @updateOrientation 
+    window.addEventListener 'deviceorientation', @updateOrientation 
 
   realWidth: ->
     window.innerWidth * window.devicePixelRatio
@@ -35,10 +38,10 @@ class JewelClone
     document.body.appendChild @renderer.domElement 
 
     @scene.add( new THREE.AmbientLight( 0x555555 ) )
-    light = new THREE.DirectionalLight( 0xffffff, 1 )
-    light.position.z = 100
-    light.position.y = 10
-    @scene.add( light )
+    @light = new THREE.DirectionalLight( 0xffffff, 1 )
+    @light.position.z = 100
+    @light.position.y = 10
+    @scene.add( @light )
 
 
   jewelsLoaded: =>
@@ -53,9 +56,20 @@ class JewelClone
     @scene.add( @board.object )
     @renderLoop(0)
 
+
+  updateOrientation: (orientation) =>
+    @deviceAlpha = orientation.alpha
+    @deviceGamma = orientation.gamma
+    @deviceBeta = orientation.beta
+
+  updateLight: ->
+    @light.position.x = @deviceGamma * -10
+    @light.position.y = @deviceBeta * 10
+
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     @fps.update(t)
+    @updateLight()
     @renderer.render( @scene, @camera )
 
     
