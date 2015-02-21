@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="net.drshoggoth.jewelclone" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>JewelClone</name>
+    <description>
+       Yet another jewel clone.
+    </description>
+    <author email="jeremyjbrenner@gmail.com" href="http://drshoggoth.net">
+        Jeremy J. Brenner
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+    <preference name="Fullscreen" value="true" />
+    <preference name="Orientation" value="portrait" />
+</widget>
