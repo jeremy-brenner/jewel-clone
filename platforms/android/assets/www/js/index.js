@@ -5,8 +5,9 @@
 
   Fps = (function() {
     function Fps() {
-      this.reset();
       this.refresh = 1000;
+      this.frames = 0;
+      this.lasttime = 0;
       this.createDiv();
     }
 
@@ -17,19 +18,19 @@
       return document.getElementsByTagName('body')[0].appendChild(div);
     };
 
-    Fps.prototype.reset = function() {
-      this.frames = 0;
-      return this.lasttime = 0;
+    Fps.prototype.timeDiff = function(t) {
+      return t - this.lasttime;
     };
 
     Fps.prototype.update = function(t) {
-      var diff, fps;
+      var fps;
       this.frames++;
-      diff = t - this.lasttime;
-      if (diff > this.refresh) {
-        fps = Math.floor(this.frames / (diff / 100000)) / 100;
+      console.log(this.timeDiff(t), t, this.lasttime, this.refresh);
+      if (this.timeDiff(t) > this.refresh) {
+        fps = Math.floor(this.frames / (this.timeDiff(t) / 100000)) / 100;
         document.getElementById('fps').innerText = "fps: " + fps;
-        return this.reset();
+        this.frames = 0;
+        return this.lasttime = t;
       }
     };
 
