@@ -5,6 +5,7 @@ local.properties
 /gradle
 # Ant builds
 ant-built
+ant-build
 ant-gen
 # Eclipse builds
 gen
