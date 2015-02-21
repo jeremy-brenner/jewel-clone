@@ -2,16 +2,16 @@
 class JewelClone
   constructor: ->
     @logger = new Logger()
+    @logger.log "logger started"
     @fps = new Fps()
     @registerEvents()
     @logger.log 'init three'
     @initThree()
-    @logger.log 'start renderloop'
-    @renderLoop(0)
+    @jewels = new Jewels()
+    @jewels.onload = @jewelsLoaded
 
   registerEvents: ->
     window.addEventListener 'deviceorientation', @updateOrientation 
-
 
   realWidth: ->
     window.innerWidth * window.devicePixelRatio
@@ -44,28 +44,20 @@ class JewelClone
     @betaAxisInversion = -1
     @gammaAxisInversion = -1
 
-    geometry = new THREE.BufferGeometry().fromGeometry( new THREE.BoxGeometry( 1, 1, 1 ) )
-    material = new THREE.MeshLambertMaterial
-      color: 'blue'
-      ambient: 'blue'
-    @cube = new THREE.Mesh( geometry, material )
     @scene.add( new THREE.AmbientLight( 0x555555 ) )
     light = new THREE.DirectionalLight( 0xffffff, 1 )
     light.position.z = 3
     light.position.y = 1
     @scene.add( light )
-    @scene.add( @cube )
     @camera.position.z = 3
-    @frames = 0
 
-
-  updateCube: ->
-    @cube.rotation[@betaAxis] = @deviceBeta * (Math.PI/180) * @betaAxisInversion
-    @cube.rotation[@gammaAxis] = @deviceGamma * (Math.PI/180) * @gammaAxisInversion
+  jewelsLoaded: =>
+    @logger.log "jewels loaded"
+    @scene.add( @jewels.objects[0].mesh )
+    @renderLoop(0)
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
-    @updateCube()
     @fps.update(t)
     @renderer.render( @scene, @camera )
 
