@@ -3,5 +3,5 @@ class Cell
     @x = x
     @y = y
     @jewel = jewel
-    @jewel.position.x = x
-    @jewel.position.y = y
+    @jewel.position.x = x + 0.5
+    @jewel.position.y = y + 0.5

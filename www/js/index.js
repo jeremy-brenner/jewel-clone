@@ -46,8 +46,8 @@
       this.x = x;
       this.y = y;
       this.jewel = jewel;
-      this.jewel.position.x = x;
-      this.jewel.position.y = y;
+      this.jewel.position.x = x + 0.5;
+      this.jewel.position.y = y + 0.5;
     }
 
     return Cell;
@@ -179,8 +179,8 @@
     JewelClone.prototype.initThree = function() {
       document.body.style.zoom = 1 / window.devicePixelRatio;
       this.scene = new THREE.Scene();
-      this.camera = new THREE.OrthographicCamera(this.realWidth() / -2, this.realWidth() / 2, this.realHeight() / 2, this.realHeight() / -2, -100, 1000);
-      this.camera.position.z = 100;
+      this.camera = new THREE.OrthographicCamera(0, this.realWidth(), this.realHeight(), 0, 0, 1000);
+      this.camera.position.z = 500;
       this.camera.updateProjectionMatrix();
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
@@ -203,15 +203,13 @@
       offset = -s * ((d / 2) - 0.5);
       this.board = new Grid(d, d, this.jewels);
       this.board.object.scale.multiplyScalar(s);
-      this.board.object.position.x = offset;
-      this.board.object.position.y = offset - top_offset;
       this.scene.add(this.board.object);
       return this.renderLoop(0);
     };
 
     JewelClone.prototype.updateLight = function() {
-      this.light.position.x = this.input.orientation.gamma * -5;
-      return this.light.position.y = this.input.orientation.beta * 5;
+      this.light.position.x = this.input.orientation.gamma * -1;
+      return this.light.position.y = this.input.orientation.beta;
     };
 
     JewelClone.prototype.renderLoop = function(t) {

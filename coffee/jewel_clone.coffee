@@ -25,8 +25,10 @@ class JewelClone
   initThree: ->
     document.body.style.zoom = 1 / window.devicePixelRatio
     @scene = new THREE.Scene()
-    @camera = new THREE.OrthographicCamera( @realWidth() / - 2, @realWidth() / 2, @realHeight() / 2, @realHeight() / - 2, -100, 1000 )
-    @camera.position.z = 100
+
+    @camera = new THREE.OrthographicCamera( 0, @realWidth(), @realHeight(), 0, 0, 1000 )
+
+    @camera.position.z = 500
     @camera.updateProjectionMatrix()
     @renderer = new THREE.WebGLRenderer
       antialias: true
@@ -44,20 +46,16 @@ class JewelClone
     @logger.log "jewels loaded"
     d = 8
     s = @realWidth() / d
-    top_offset = ( @realHeight() - @realWidth() ) / 2
-    offset = -s*((d/2)-0.5)
 
     @board = new Grid(d,d,@jewels)
-    
     @board.object.scale.multiplyScalar(s)
-    @board.object.position.x = offset
-    @board.object.position.y = offset - top_offset
+
     @scene.add( @board.object )
     @renderLoop(0)
 
   updateLight: ->
-    @light.position.x = @input.orientation.gamma * -5
-    @light.position.y = @input.orientation.beta * 5
+    @light.position.x = @input.orientation.gamma * -1
+    @light.position.y = @input.orientation.beta
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
