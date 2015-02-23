@@ -4,12 +4,6 @@ class Fps
     @refresh = 1000
     @frames = 0
     @lasttime = 0
-    @createDiv()
-
-  createDiv: ->
-    div = document.createElement "div"
-    div.id = 'fps'
-    document.getElementsByTagName('body')[0].appendChild div
 
   timeDiff: (t) ->
     t - @lasttime  

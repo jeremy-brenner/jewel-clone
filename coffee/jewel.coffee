@@ -2,6 +2,7 @@ class Jewel
   constructor: (id) ->
     @loaded = false
     @id = id
+    @scalefactor = 1.25
     @colors = [
       'red'
       'white'
@@ -34,9 +35,9 @@ class Jewel
     geometry = jsonloader.parse( json.geometries[0].data ).geometry
     @geometry = new THREE.BufferGeometry().fromGeometry geometry
     rx = new THREE.Matrix4().makeRotationX( Math.PI/2 )
-    ry = new THREE.Matrix4().makeRotationY( Math.PI/2 )
-    r = new THREE.Matrix4().multiplyMatrices(rx,ry)
-    @geometry.applyMatrix rx
+    s = new THREE.Matrix4().makeScale @scalefactor, @scalefactor, @scalefactor
+    r = new THREE.Matrix4().multiplyMatrices rx, s
+    @geometry.applyMatrix r
 
     @loaded = true
     @onload()
