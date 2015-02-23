@@ -67,8 +67,8 @@ class Cell
     @square.position.x = @xPos()
     @square.position.y = @yPos()
 
-  highlite: ->
-    @jewel.rotation.z += 0.1
+  highlite: (t) ->
+    @jewel.rotation.z = Math.PI*2-t/300%Math.PI*2
     @jewel.scale.x = 1.25
     @jewel.scale.y = 1.25
 

@@ -17,18 +17,26 @@ class Grid
   update: (t) ->
     if @ready_for_input and @main.input.touching 
       @selected = @touchedCell(@main.input.start)
-      current = @touchedCell(@main.input.move) or @selected
-   
+      current = @touchedCell(@main.input.move)
+      return @stopInput() unless @selected and current
+ 
+
       if @selected is current
-        @selected.highlite(t)
+        @selected?.highlite(t)
       else
-        @ready_for_input = false
-        @selected?.reset()
+        @stopInput()
         @selected.swapJewel current
 
     if not @main.input.touching
+      if @selected
+        @selected.reset()
+        @selected = null
       @ready_for_input = true
       @selected?.reset()
+
+  stopInput: ->
+    @ready_for_input = false
+    @selected?.reset()  
 
 
   topOffset: ->

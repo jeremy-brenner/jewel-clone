@@ -25,9 +25,9 @@ class Input
     @start.x = e.touches[0].screenX * window.devicePixelRatio
     @start.y = e.touches[0].screenY * window.devicePixelRatio
     @move = 
-      x: null
-      y: null
-      
+      x: @start.x
+      y: @start.y
+
   touchEnd: (e) =>
     @touching = false
 

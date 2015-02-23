@@ -89,8 +89,8 @@
       return this.square.position.y = this.yPos();
     };
 
-    Cell.prototype.highlite = function() {
-      this.jewel.rotation.z += 0.1;
+    Cell.prototype.highlite = function(t) {
+      this.jewel.rotation.z = Math.PI * 2 - t / 300 % Math.PI * 2;
       this.jewel.scale.x = 1.25;
       return this.jewel.scale.y = 1.25;
     };
@@ -150,21 +150,33 @@
       var current, ref, ref1;
       if (this.ready_for_input && this.main.input.touching) {
         this.selected = this.touchedCell(this.main.input.start);
-        current = this.touchedCell(this.main.input.move) || this.selected;
+        current = this.touchedCell(this.main.input.move);
+        if (!(this.selected && current)) {
+          return this.stopInput();
+        }
         if (this.selected === current) {
-          this.selected.highlite(t);
-        } else {
-          this.ready_for_input = false;
           if ((ref = this.selected) != null) {
-            ref.reset();
+            ref.highlite(t);
           }
+        } else {
+          this.stopInput();
           this.selected.swapJewel(current);
         }
       }
       if (!this.main.input.touching) {
+        if (this.selected) {
+          this.selected.reset();
+          this.selected = null;
+        }
         this.ready_for_input = true;
         return (ref1 = this.selected) != null ? ref1.reset() : void 0;
       }
+    };
+
+    Grid.prototype.stopInput = function() {
+      var ref;
+      this.ready_for_input = false;
+      return (ref = this.selected) != null ? ref.reset() : void 0;
     };
 
     Grid.prototype.topOffset = function() {
@@ -264,8 +276,8 @@
       this.start.x = e.touches[0].screenX * window.devicePixelRatio;
       this.start.y = e.touches[0].screenY * window.devicePixelRatio;
       return this.move = {
-        x: null,
-        y: null
+        x: this.start.x,
+        y: this.start.y
       };
     };
 
