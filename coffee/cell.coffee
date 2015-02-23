@@ -3,7 +3,9 @@ class Cell
     @x = x
     @y = y
     @main = main
-    @setJewel @main.jewels.random()
+    @jewel = @main.jewels.random()
+    @jewel.position.x = @xPos()
+    @jewel.position.y = @yPos()
     @buildSquare()
 
   xPos: ->
@@ -49,10 +51,6 @@ class Cell
     @jewel.scale.x = @tween.s
     @jewel.scale.y = @tween.s
 
-  setJewel: (j) ->
-    @jewel = j
-    @jewel.position.x = @xPos()
-    @jewel.position.y = @yPos()
 
   squareOpacity: ->
     if @y%2 isnt @x%2 then 0.2 else 0.5
