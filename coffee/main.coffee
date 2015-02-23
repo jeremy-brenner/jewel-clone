@@ -7,9 +7,6 @@ class Main
     @logger.log "logger started"
     @fps = new Fps()
     @input = new Input()
-    @deviceAlpha = 0
-    @deviceBeta = 0
-    @deviceGamma = 0
     @logger.log 'init three'
     @initThree()
     @drawBackground()
@@ -35,12 +32,11 @@ class Main
     @camera.updateProjectionMatrix()
     @renderer = new THREE.WebGLRenderer
       antialias: true
-    @renderer.shadowMapEnabled = true
-    @renderer.shadowMapType = THREE.PCFSoftShadowMap
+
     @renderer.setSize @realWidth(), @realHeight()
     document.body.appendChild @renderer.domElement 
 
-    @scene.add( new THREE.AmbientLight( 0x555555 ) )
+    @scene.add( new THREE.AmbientLight( 0x666666 ) )
     @light = new THREE.DirectionalLight( 0xffffff, 1 )
     @light.position.z = 100
     @light.position.x = 60
@@ -72,8 +68,10 @@ class Main
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
-    @fps.update(t)
-    @updateLight()
-    @renderer.render( @scene, @camera )
+    TWEEN.update t
 
+    @updateLight()
+    @grid.update t
+    @renderer.render( @scene, @camera )
+    @fps.update t
     

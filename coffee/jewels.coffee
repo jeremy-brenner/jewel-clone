@@ -38,9 +38,7 @@ class Jewels
       color: color
       ambient: color
       shininess: 60
-      transparent : true
-      opacity: 0.9
-
+  
   buildJewel: (def) ->
     jewel = new THREE.Object3D()
     jewel_mesh = new THREE.Mesh( def.geometry, def.material )

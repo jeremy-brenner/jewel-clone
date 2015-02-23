@@ -5,17 +5,67 @@
 
   Cell = (function() {
     function Cell(x, y, main) {
+      this.tweenTick = bind(this.tweenTick, this);
       this.x = x;
       this.y = y;
       this.main = main;
-      this.getJewel();
+      this.setJewel(this.main.jewels.random());
       this.buildSquare();
     }
 
-    Cell.prototype.getJewel = function() {
-      this.jewel = this.main.jewels.random();
-      this.jewel.position.x = this.x + 0.5;
-      return this.jewel.position.y = this.y + 0.5;
+    Cell.prototype.xPos = function() {
+      return this.x + 0.5;
+    };
+
+    Cell.prototype.yPos = function() {
+      return this.y + 0.5;
+    };
+
+    Cell.prototype.swapJewel = function(cell) {
+      var new_jewel;
+      new_jewel = cell.jewel;
+      cell.tweenJewel(this.jewel);
+      return this.tweenJewel(new_jewel, false);
+    };
+
+    Cell.prototype.tweenJewel = function(jewel, front) {
+      var length, s1, s2, sc;
+      if (front == null) {
+        front = true;
+      }
+      this.jewel = jewel;
+      length = 500;
+      sc = front ? 0.1 : -0.1;
+      this.tween = {
+        x: this.jewel.position.x,
+        y: this.jewel.position.y,
+        s: 1
+      };
+      new TWEEN.Tween(this.tween).to({
+        x: this.xPos(),
+        y: this.yPos()
+      }, length).easing(TWEEN.Easing.Back.InOut).onUpdate(this.tweenTick).start();
+      s1 = new TWEEN.Tween(this.tween).to({
+        s: 1 + sc
+      }, length / 2).easing(TWEEN.Easing.Quadratic.Out).onUpdate(this.tweenTick);
+      s2 = new TWEEN.Tween(this.tween).to({
+        s: 1
+      }, length / 2).easing(TWEEN.Easing.Quadratic.In).onUpdate(this.tweenTick);
+      return s1.chain(s2).start();
+    };
+
+    Cell.prototype.tweenTick = function() {
+      this.jewel.position.x = this.tween.x;
+      this.jewel.position.y = this.tween.y;
+      this.jewel.position.z = this.tween.s - 1;
+      this.jewel.scale.x = this.tween.s;
+      return this.jewel.scale.y = this.tween.s;
+    };
+
+    Cell.prototype.setJewel = function(j) {
+      this.jewel = j;
+      this.jewel.position.x = this.xPos();
+      return this.jewel.position.y = this.yPos();
     };
 
     Cell.prototype.squareOpacity = function() {
@@ -35,8 +85,20 @@
       });
       geom = new THREE.PlaneBufferGeometry(1, 1);
       this.square = new THREE.Mesh(geom, mat);
-      this.square.position.x = this.x + 0.5;
-      return this.square.position.y = this.y + 0.5;
+      this.square.position.x = this.xPos();
+      return this.square.position.y = this.yPos();
+    };
+
+    Cell.prototype.highlite = function() {
+      this.jewel.rotation.z += 0.1;
+      this.jewel.scale.x = 1.25;
+      return this.jewel.scale.y = 1.25;
+    };
+
+    Cell.prototype.reset = function() {
+      this.jewel.rotation.z = 0;
+      this.jewel.scale.x = 1;
+      return this.jewel.scale.y = 1;
     };
 
     return Cell;
@@ -76,14 +138,45 @@
       this.main = main;
       this.margin = 0.25;
       this.cells = this.buildCells();
-      this.board = new THREE.Object3D();
       this.object = new THREE.Object3D();
-      this.object.add(this.board);
+      this.ready_for_input = true;
       this.buildBoard();
       this.object.position.x = this.boardScale(this.margin);
       this.object.position.y = this.boardScale(this.margin);
       this.object.scale.multiplyScalar(this.boardScale());
     }
+
+    Grid.prototype.update = function(t) {
+      var current, ref, ref1;
+      if (this.ready_for_input && this.main.input.touching) {
+        this.selected = this.touchedCell(this.main.input.start);
+        current = this.touchedCell(this.main.input.move) || this.selected;
+        if (this.selected === current) {
+          this.selected.highlite(t);
+        } else {
+          this.ready_for_input = false;
+          if ((ref = this.selected) != null) {
+            ref.reset();
+          }
+          this.selected.swapJewel(current);
+        }
+      }
+      if (!this.main.input.touching) {
+        this.ready_for_input = true;
+        return (ref1 = this.selected) != null ? ref1.reset() : void 0;
+      }
+    };
+
+    Grid.prototype.topOffset = function() {
+      return this.main.realHeight() - this.boardScale(this.h + this.margin);
+    };
+
+    Grid.prototype.touchedCell = function(pos) {
+      var ref, x, y;
+      x = Math.floor(pos.x / this.boardScale() - this.margin);
+      y = this.h - 1 - Math.floor((pos.y - this.topOffset()) / this.boardScale());
+      return (ref = this.cells[x]) != null ? ref[y] : void 0;
+    };
 
     Grid.prototype.boardScale = function(i) {
       if (i == null) {
@@ -93,17 +186,17 @@
     };
 
     Grid.prototype.buildBoard = function() {
-      var cell, j, len, ref, results, row;
+      var cell, k, len, ref, results, row;
       ref = this.cells;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        row = ref[j];
+      for (k = 0, len = ref.length; k < len; k++) {
+        row = ref[k];
         results.push((function() {
-          var k, len1, results1;
+          var l, len1, results1;
           results1 = [];
-          for (k = 0, len1 = row.length; k < len1; k++) {
-            cell = row[k];
-            this.board.add(cell.square);
+          for (l = 0, len1 = row.length; l < len1; l++) {
+            cell = row[l];
+            this.object.add(cell.square);
             results1.push(this.object.add(cell.jewel));
           }
           return results1;
@@ -113,13 +206,13 @@
     };
 
     Grid.prototype.buildCells = function() {
-      var j, ref, results, x, y;
+      var k, ref, results, x, y;
       results = [];
-      for (x = j = 0, ref = this.h; 0 <= ref ? j < ref : j > ref; x = 0 <= ref ? ++j : --j) {
+      for (x = k = 0, ref = this.h; 0 <= ref ? k < ref : k > ref; x = 0 <= ref ? ++k : --k) {
         results.push((function() {
-          var k, ref1, results1;
+          var l, ref1, results1;
           results1 = [];
-          for (y = k = 0, ref1 = this.w; 0 <= ref1 ? k < ref1 : k > ref1; y = 0 <= ref1 ? ++k : --k) {
+          for (y = l = 0, ref1 = this.w; 0 <= ref1 ? l < ref1 : l > ref1; y = 0 <= ref1 ? ++l : --l) {
             results1.push(new Cell(x, y, this.main));
           }
           return results1;
@@ -166,33 +259,29 @@
       return window.addEventListener('deviceorientation', this.updateOrientation);
     };
 
-    Input.prototype.debug = function() {
-      return document.getElementById('input').innerText = "touching: " + (this.touching.toString()) + "\nstart: " + this.start.x + ", " + this.start.y + "\nmove: " + this.move.x + ", " + this.move.y + "\nalpha: " + this.orientation.alpha + "\nbeta: " + this.orientation.beta + "\ngamma: " + this.orientation.gamma;
-    };
-
     Input.prototype.touchStart = function(e) {
       this.touching = true;
       this.start.x = e.touches[0].screenX * window.devicePixelRatio;
       this.start.y = e.touches[0].screenY * window.devicePixelRatio;
-      return this.debug();
+      return this.move = {
+        x: null,
+        y: null
+      };
     };
 
     Input.prototype.touchEnd = function(e) {
-      this.touching = false;
-      return this.debug();
+      return this.touching = false;
     };
 
     Input.prototype.touchMove = function(e) {
       this.move.x = e.touches[0].screenX * window.devicePixelRatio;
-      this.move.y = e.touches[0].screenY * window.devicePixelRatio;
-      return this.debug();
+      return this.move.y = e.touches[0].screenY * window.devicePixelRatio;
     };
 
     Input.prototype.updateOrientation = function(orientation) {
       this.orientation.alpha = orientation.alpha || 0;
       this.orientation.gamma = orientation.gamma || 0;
-      this.orientation.beta = orientation.beta || 0;
-      return this.debug();
+      return this.orientation.beta = orientation.beta || 0;
     };
 
     return Input;
@@ -223,10 +312,10 @@
       var jewel, json;
       json = JSON.parse(this.req.responseText);
       this.objects = (function() {
-        var j, len, results;
+        var k, len, results;
         results = [];
-        for (j = 0, len = json.length; j < len; j++) {
-          jewel = json[j];
+        for (k = 0, len = json.length; k < len; k++) {
+          jewel = json[k];
           results.push({
             geometry: this.buildGeometry(jewel.geometry),
             material: this.buildMaterial(jewel.color)
@@ -252,9 +341,7 @@
       return new THREE.MeshPhongMaterial({
         color: color,
         ambient: color,
-        shininess: 60,
-        transparent: true,
-        opacity: 0.9
+        shininess: 60
       });
     };
 
@@ -303,9 +390,6 @@
       this.logger.log("logger started");
       this.fps = new Fps();
       this.input = new Input();
-      this.deviceAlpha = 0;
-      this.deviceBeta = 0;
-      this.deviceGamma = 0;
       this.logger.log('init three');
       this.initThree();
       this.drawBackground();
@@ -334,11 +418,9 @@
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
-      this.renderer.shadowMapEnabled = true;
-      this.renderer.shadowMapType = THREE.PCFSoftShadowMap;
       this.renderer.setSize(this.realWidth(), this.realHeight());
       document.body.appendChild(this.renderer.domElement);
-      this.scene.add(new THREE.AmbientLight(0x555555));
+      this.scene.add(new THREE.AmbientLight(0x666666));
       this.light = new THREE.DirectionalLight(0xffffff, 1);
       this.light.position.z = 100;
       this.light.position.x = 60;
@@ -373,9 +455,11 @@
 
     Main.prototype.renderLoop = function(t) {
       requestAnimationFrame(this.renderLoop);
-      this.fps.update(t);
+      TWEEN.update(t);
       this.updateLight();
-      return this.renderer.render(this.scene, this.camera);
+      this.grid.update(t);
+      this.renderer.render(this.scene, this.camera);
+      return this.fps.update(t);
     };
 
     return Main;

@@ -20,33 +20,22 @@ class Input
     window.addEventListener 'touchmove', @touchMove
     window.addEventListener 'deviceorientation', @updateOrientation 
 
-  debug: ->
-    document.getElementById('input').innerText = """
-      touching: #{@touching.toString()}
-      start: #{@start.x}, #{@start.y}
-      move: #{@move.x}, #{@move.y}
-      alpha: #{@orientation.alpha}
-      beta: #{@orientation.beta}
-      gamma: #{@orientation.gamma}
-    """
-
   touchStart: (e) =>
     @touching = true
     @start.x = e.touches[0].screenX * window.devicePixelRatio
     @start.y = e.touches[0].screenY * window.devicePixelRatio
-    @debug()
-
+    @move = 
+      x: null
+      y: null
+      
   touchEnd: (e) =>
     @touching = false
-    @debug()
 
   touchMove: (e) =>
     @move.x = e.touches[0].screenX * window.devicePixelRatio
     @move.y = e.touches[0].screenY * window.devicePixelRatio
-    @debug()
 
   updateOrientation: (orientation) =>
     @orientation.alpha = orientation.alpha or 0
     @orientation.gamma = orientation.gamma or 0
     @orientation.beta = orientation.beta or 0 
-    @debug()
