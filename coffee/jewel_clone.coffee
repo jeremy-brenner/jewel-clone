@@ -35,10 +35,11 @@ class JewelClone
     @renderer.setSize @realWidth(), @realHeight()
     document.body.appendChild @renderer.domElement 
 
-    @scene.add( new THREE.AmbientLight( 0x555555 ) )
+    @scene.add( new THREE.AmbientLight( 0x333333 ) )
     @light = new THREE.DirectionalLight( 0xffffff, 1 )
     @light.position.z = 100
-    @light.position.y = 10
+    @light.position.x = 30
+    @light.position.y = 30
     @scene.add( @light )
 
 
@@ -54,8 +55,8 @@ class JewelClone
     @renderLoop(0)
 
   updateLight: ->
-    @light.position.x = @input.orientation.gamma * -1
-    @light.position.y = @input.orientation.beta
+    @light.position.x = ( @input.orientation.gamma * -1 ) + 30
+    @light.position.y = ( @input.orientation.beta ) + 30
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
