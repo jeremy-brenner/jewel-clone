@@ -2,7 +2,11 @@ class Jewels
   constructor: ->
     @loaded = false
     @jsonloader = new THREE.JSONLoader()
-    @scalefactor = 1.25
+    @scalefactor = 1.125
+    @outline_material = new THREE.MeshBasicMaterial
+      color: 'black'  
+      side: THREE.BackSide 
+      
     @loadJewels()
 
   loadJewels: ->
@@ -33,14 +37,23 @@ class Jewels
     new THREE.MeshPhongMaterial
       color: color
       ambient: color
-      shininess: 50
+      shininess: 60
+      transparent : true
+      opacity: 0.9
+
+  buildJewel: (def) ->
+    jewel = new THREE.Object3D()
+    jewel_mesh = new THREE.Mesh( def.geometry, def.material )
+   
+    outline_mesh = new THREE.Mesh( def.geometry, @outline_material )
+    outline_mesh.scale.multiplyScalar(1.125)
+
+    jewel.add jewel_mesh
+    jewel.add outline_mesh
+    jewel
 
   random: ->
-    j = @objects[Math.floor(Math.random() * @objects.length)]
-    new THREE.Mesh( j.geometry, j.material )
-
-  load: ->
-    new Jewel(id) for id in @list
+    @buildJewel @objects[Math.floor(Math.random() * @objects.length)]
 
   onload: ->
     #stub 

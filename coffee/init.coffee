@@ -1,2 +1,2 @@
 
-document.addEventListener 'deviceready', -> new JewelClone()
+document.addEventListener 'deviceready', -> new Main()
