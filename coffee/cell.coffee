@@ -14,6 +14,30 @@ class Cell
   yPos: ->
     @y+0.5
 
+  checkMatches: ->
+    h = [@gem].concat @match( 'left' ).concat @match( 'right' )
+    v = [@gem].concat @match('up' ).concat @match( 'down' ) 
+    if h.length >= 3
+      g.destroy() for g in h
+    if v.length >= 3
+      g.destroy() for g in v
+
+  match: (dir) ->
+    cell = switch dir
+      when 'left'
+        @main.grid.cells[@x-1]?[@y]
+      when 'right'
+        @main.grid.cells[@x+1]?[@y]
+      when 'up'
+        @main.grid.cells[@x]?[@y+1]
+      when 'down'
+        @main.grid.cells[@x]?[@y-1]
+
+    if cell?.gem.id == @gem.id
+      [cell.gem].concat cell.match(dir)  
+    else 
+      [] 
+
   swapGem: (cell) ->
     new_gem = cell.gem
     cell.gem = @gem

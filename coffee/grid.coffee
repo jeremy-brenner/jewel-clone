@@ -14,12 +14,6 @@ class Grid
 
     @object.scale.multiplyScalar @boardScale()
 
-  row: (i) ->
-    @cells[i]
-
-  col: (i) ->
-    row[i] for row in @cells 
-
   update: (t) ->
     if @ready_for_input and @main.input.touching 
       @selected = @touchedCell(@main.input.start)
@@ -32,6 +26,8 @@ class Grid
       else
         @stopInput()
         @selected.swapGem current
+        current.checkMatches()
+        @selected.checkMatches()
 
     if not @main.input.touching
       if @selected

@@ -17,8 +17,9 @@ class GemFactory
 
   gemsLoaded: =>
     json = JSON.parse @req.responseText
-    @defs = for gem in json
+    @defs = for gem,i in json
       {
+        id: i
         geometry: @buildGeometry(gem.geometry)
         material: @buildMaterial(gem.color)
         outline: @outline

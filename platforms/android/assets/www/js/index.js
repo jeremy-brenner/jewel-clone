@@ -22,6 +22,48 @@
       return this.y + 0.5;
     };
 
+    Cell.prototype.checkMatches = function() {
+      var g, h, j, k, len, len1, results, v;
+      h = [this.gem].concat(this.match('left').concat(this.match('right')));
+      v = [this.gem].concat(this.match('up').concat(this.match('down')));
+      if (h.length >= 3) {
+        for (j = 0, len = h.length; j < len; j++) {
+          g = h[j];
+          g.destroy();
+        }
+      }
+      if (v.length >= 3) {
+        results = [];
+        for (k = 0, len1 = v.length; k < len1; k++) {
+          g = v[k];
+          results.push(g.destroy());
+        }
+        return results;
+      }
+    };
+
+    Cell.prototype.match = function(dir) {
+      var cell;
+      cell = (function() {
+        var ref, ref1, ref2, ref3;
+        switch (dir) {
+          case 'left':
+            return (ref = this.main.grid.cells[this.x - 1]) != null ? ref[this.y] : void 0;
+          case 'right':
+            return (ref1 = this.main.grid.cells[this.x + 1]) != null ? ref1[this.y] : void 0;
+          case 'up':
+            return (ref2 = this.main.grid.cells[this.x]) != null ? ref2[this.y + 1] : void 0;
+          case 'down':
+            return (ref3 = this.main.grid.cells[this.x]) != null ? ref3[this.y - 1] : void 0;
+        }
+      }).call(this);
+      if ((cell != null ? cell.gem.id : void 0) === this.gem.id) {
+        return [cell.gem].concat(cell.match(dir));
+      } else {
+        return [];
+      }
+    };
+
     Cell.prototype.swapGem = function(cell) {
       var new_gem;
       new_gem = cell.gem;
@@ -97,6 +139,7 @@
   Gem = (function() {
     function Gem(def) {
       this.tweenTick = bind(this.tweenTick, this);
+      this.id = def.id;
       this.object = new THREE.Object3D();
       this.mesh = new THREE.Mesh(def.geometry, def.material);
       this.outline = new THREE.Mesh(def.geometry, def.outline);
@@ -104,6 +147,18 @@
       this.object.add(this.mesh);
       this.object.add(this.outline);
     }
+
+    Gem.prototype.destroy = function() {
+      var j, len, ref, t;
+      if (this.tweens) {
+        ref = this.tweens;
+        for (j = 0, len = ref.length; j < len; j++) {
+          t = ref[j];
+          t.stop();
+        }
+      }
+      return this.object.position.z = 99999;
+    };
 
     Gem.prototype.setX = function(x) {
       return this.object.position.x = x;
@@ -114,36 +169,37 @@
     };
 
     Gem.prototype.swapTo = function(x, y, front) {
-      var length, s1, s2, sc;
+      var length, s, s1, s2, sc;
       if (front == null) {
         front = true;
       }
       length = 500;
-      sc = front ? 0.1 : -0.1;
-      this.tween = {
+      sc = front ? 0.2 : -0.2;
+      this.tween_data = {
         x: this.object.position.x,
         y: this.object.position.y,
         s: 1
       };
-      new TWEEN.Tween(this.tween).to({
+      s = new TWEEN.Tween(this.tween_data).to({
         x: x,
         y: y
       }, length).easing(TWEEN.Easing.Back.InOut).onUpdate(this.tweenTick).start();
-      s1 = new TWEEN.Tween(this.tween).to({
+      s1 = new TWEEN.Tween(this.tween_data).to({
         s: 1 + sc
       }, length / 2).easing(TWEEN.Easing.Quadratic.Out).onUpdate(this.tweenTick);
-      s2 = new TWEEN.Tween(this.tween).to({
+      s2 = new TWEEN.Tween(this.tween_data).to({
         s: 1
       }, length / 2).easing(TWEEN.Easing.Quadratic.In).onUpdate(this.tweenTick);
-      return s1.chain(s2).start();
+      s1.chain(s2).start();
+      return this.tweens = [s, s1, s2];
     };
 
     Gem.prototype.tweenTick = function() {
-      this.object.position.x = this.tween.x;
-      this.object.position.y = this.tween.y;
-      this.object.position.z = this.tween.s - 1;
-      this.object.scale.x = this.tween.s;
-      return this.object.scale.y = this.tween.s;
+      this.object.position.x = this.tween_data.x;
+      this.object.position.y = this.tween_data.y;
+      this.object.position.z = this.tween_data.s - 1;
+      this.object.scale.x = this.tween_data.s;
+      return this.object.scale.y = this.tween_data.s;
     };
 
     return Gem;
@@ -171,14 +227,15 @@
     };
 
     GemFactory.prototype.gemsLoaded = function() {
-      var gem, json;
+      var gem, i, json;
       json = JSON.parse(this.req.responseText);
       this.defs = (function() {
         var j, len, results;
         results = [];
-        for (j = 0, len = json.length; j < len; j++) {
-          gem = json[j];
+        for (i = j = 0, len = json.length; j < len; i = ++j) {
+          gem = json[i];
           results.push({
+            id: i,
             geometry: this.buildGeometry(gem.geometry),
             material: this.buildMaterial(gem.color),
             outline: this.outline
@@ -237,21 +294,6 @@
       this.object.scale.multiplyScalar(this.boardScale());
     }
 
-    Grid.prototype.row = function(i) {
-      return this.cells[i];
-    };
-
-    Grid.prototype.col = function(i) {
-      var j, len, ref, results, row;
-      ref = this.cells;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        row = ref[j];
-        results.push(row[i]);
-      }
-      return results;
-    };
-
     Grid.prototype.update = function(t) {
       var current, ref, ref1;
       if (this.ready_for_input && this.main.input.touching) {
@@ -270,6 +312,8 @@
         } else {
           this.stopInput();
           this.selected.swapGem(current);
+          current.checkMatches();
+          this.selected.checkMatches();
         }
       }
       if (!this.main.input.touching) {
