@@ -3,9 +3,9 @@ class Cell
     @x = x
     @y = y
     @main = main
-    @jewel = @main.jewels.random()
-    @jewel.position.x = @xPos()
-    @jewel.position.y = @yPos()
+    @gem = @main.gem_factory.random()
+    @gem.setX @xPos()
+    @gem.setY @yPos()
     @buildSquare()
 
   xPos: ->
@@ -14,43 +14,13 @@ class Cell
   yPos: ->
     @y+0.5
 
-  swapJewel: (cell) ->
-    new_jewel = cell.jewel
-    cell.tweenJewel @jewel
-    @tweenJewel new_jewel,false
+  swapGem: (cell) ->
+    new_gem = cell.gem
+    cell.gem = @gem
+    @gem = new_gem
 
-  tweenJewel: (jewel,front=true) ->
-    @jewel = jewel
-    length = 500
-    sc = if front then 0.1 else -0.1
-
-    @tween = { x: @jewel.position.x, y: @jewel.position.y, s: 1 }
-    
-    new TWEEN.Tween( @tween )
-             .to( { x: @xPos(), y: @yPos() }, length ) 
-             .easing( TWEEN.Easing.Back.InOut )
-             .onUpdate( @tweenTick )
-             .start()
-
-    s1 = new TWEEN.Tween( @tween )
-             .to( { s: 1+sc }, length/2 ) 
-             .easing( TWEEN.Easing.Quadratic.Out )
-             .onUpdate( @tweenTick )
-    s2 = new TWEEN.Tween( @tween )
-             .to( { s: 1 }, length/2 ) 
-             .easing( TWEEN.Easing.Quadratic.In )
-             .onUpdate( @tweenTick )
-
-    s1.chain(s2).start()
-             
-
-  tweenTick: =>
-    @jewel.position.x = @tween.x
-    @jewel.position.y = @tween.y
-    @jewel.position.z = @tween.s-1
-    @jewel.scale.x = @tween.s
-    @jewel.scale.y = @tween.s
-
+    @gem.swapTo @xPos(), @yPos(), false 
+    cell.gem.swapTo cell.xPos(), cell.yPos()
 
   squareOpacity: ->
     if @y%2 isnt @x%2 then 0.2 else 0.5
@@ -66,12 +36,12 @@ class Cell
     @square.position.y = @yPos()
 
   highlite: (t) ->
-    @jewel.rotation.z = Math.PI*2-t/300%Math.PI*2
-    @jewel.scale.x = 1.25
-    @jewel.scale.y = 1.25
+    @gem.object.rotation.z = Math.PI*2-t/400%Math.PI*2
+    @gem.object.scale.x = 1.25
+    @gem.object.scale.y = 1.25
 
   reset: ->
-    @jewel.rotation.z = 0    
-    @jewel.scale.x = 1
-    @jewel.scale.y = 1
+    @gem.object.rotation.z = 0    
+    @gem.object.scale.x = 1
+    @gem.object.scale.y = 1
 

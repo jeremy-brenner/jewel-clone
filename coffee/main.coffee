@@ -10,8 +10,8 @@ class Main
     @logger.log 'init three'
     @initThree()
     @drawBackground()
-    @jewels = new Jewels()
-    @jewels.onload = @jewelsLoaded
+    @gem_factory = new GemFactory()
+    @gem_factory.onload = @gemsLoaded
 
   realWidth: ->
     window.innerWidth * window.devicePixelRatio
@@ -56,8 +56,8 @@ class Main
 
     @scene.add( background )
 
-  jewelsLoaded: =>
-    @logger.log "jewels loaded"
+  gemsLoaded: =>
+    @logger.log "gems loaded"
     @grid = new Grid(@grid_width, @grid_height,@)
     @scene.add( @grid.object )
     @renderLoop(0)

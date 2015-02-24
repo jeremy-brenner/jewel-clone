@@ -14,18 +14,24 @@ class Grid
 
     @object.scale.multiplyScalar @boardScale()
 
+  row: (i) ->
+    @cells[i]
+
+  col: (i) ->
+    row[i] for row in @cells 
+
   update: (t) ->
     if @ready_for_input and @main.input.touching 
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
       return @stopInput() unless @selected and current
- 
+      return @stopInput() if Math.abs(@selected.x-current.x) + Math.abs(@selected.y-current.y) > 1 #diagonal or multi-space moves
 
       if @selected is current
         @selected?.highlite(t)
       else
         @stopInput()
-        @selected.swapJewel current
+        @selected.swapGem current
 
     if not @main.input.touching
       if @selected
@@ -54,7 +60,7 @@ class Grid
     for row in @cells
       for cell in row
         @object.add( cell.square )
-        @object.add( cell.jewel )
+        @object.add( cell.gem.object )
 
   buildCells: ->
     for x in [0...@h]
