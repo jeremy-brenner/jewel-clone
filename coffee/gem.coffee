@@ -5,44 +5,56 @@ class Gem
     @mesh = new THREE.Mesh( def.geometry, def.material )
     @outline = new THREE.Mesh( def.geometry, def.outline )
     @outline.scale.multiplyScalar(1.125)
-
+    @animating = false
     @object.add @mesh
     @object.add @outline
-
-  destroy: ->
-    if @tweens
-      t.stop() for t in @tweens
-    @object.position.z = 99999
 
   setX: (x) ->
     @object.position.x = x
 
   setY: (y) ->
     @object.position.y = y
+ 
+  animationComplete: =>
+    @animating = false
 
-  swapTo: (x,y,front=true) ->
+  doSwap: (x,y,real=true) ->
+    @animating = true
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
+    if real
+      @tweens = @swapTweens(x,y)
+      @tweens.zoom_tween.start()
+      @tweens.swap_tween.onComplete( @animationComplete ).start()
+    else
+      t = @swapTweens(x,y)
+      t2 = @swapTweens(@object.position.x,@object.position.y)
+      @tweens = {
+        zoom_tween: t.zoom_tween.chain(t2.zoom_tween).start()
+        swap_tween: t.swap_tween.chain(t2.swap_tween).onComplete( @animationComplete ).start()
+      }
+
+  swapTweens: (x,y,front=true) ->
     length = 500
     sc = if front then 0.2 else -0.2
 
-    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
-    
-    s = new TWEEN.Tween( @tween_data )
+    swap_tween = new TWEEN.Tween( @tween_data )
              .to( { x: x, y: y }, length ) 
              .easing( TWEEN.Easing.Back.InOut )
              .onUpdate( @tweenTick )
-             .start()
 
-    s1 = new TWEEN.Tween( @tween_data )
+    zoom_tween_start = new TWEEN.Tween( @tween_data )
              .to( { s: 1+sc }, length/2 ) 
              .easing( TWEEN.Easing.Quadratic.Out )
              .onUpdate( @tweenTick )
-    s2 = new TWEEN.Tween( @tween_data )
+    zoom_tween_end = new TWEEN.Tween( @tween_data )
              .to( { s: 1 }, length/2 ) 
              .easing( TWEEN.Easing.Quadratic.In )
              .onUpdate( @tweenTick )
+    {
+      zoom_tween: zoom_tween_start.chain(zoom_tween_end)
+      swap_tween: swap_tween
+    }
 
-    s1.chain(s2).start()
-    @tweens = [s,s1,s2]
 
   tweenTick: =>
     @object.position.x = @tween_data.x

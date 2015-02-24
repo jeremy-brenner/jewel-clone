@@ -14,27 +14,33 @@ class Grid
 
     @object.scale.multiplyScalar @boardScale()
 
+  animating: ->
+    for row in @cells
+      for cell in row
+        return true if cell.gem.animating
+    false
+    
   update: (t) ->
     if @ready_for_input and @main.input.touching 
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
-      return @stopInput() unless @selected and current
-      return @stopInput() if Math.abs(@selected.x-current.x) + Math.abs(@selected.y-current.y) > 1 #diagonal or multi-space moves
+      return @stopInput() unless @validMove( @selected, current )
 
       if @selected is current
         @selected?.highlite(t)
       else
         @stopInput()
-        @selected.swapGem current
-        current.checkMatches()
-        @selected.checkMatches()
-
-    if not @main.input.touching
+        @selected.swapGems current
+  
+    if not @main.input.touching and not @animating()
       if @selected
         @selected.reset()
         @selected = null
       @ready_for_input = true
       @selected?.reset()
+
+  validMove: (cell1, cell2) ->
+    cell1 and cell2 and ( Math.abs(cell1.x-cell2.x) + Math.abs(cell1.y-cell2.y) ) <= 1
 
   stopInput: ->
     @ready_for_input = false

@@ -14,15 +14,35 @@ class Cell
   yPos: ->
     @y+0.5
 
-  checkMatches: ->
-    h = [@gem].concat @match( 'left' ).concat @match( 'right' )
-    v = [@gem].concat @match('up' ).concat @match( 'down' ) 
-    if h.length >= 3
-      g.destroy() for g in h
-    if v.length >= 3
-      g.destroy() for g in v
+  commitNew: ->
+    @gem = @new_gem
+    @new_gem = null
 
-  match: (dir) ->
+  swapGems: (cell) ->
+    @new_gem = cell.gem
+    cell.new_gem = @gem
+
+    if @willClear() or cell.willClear()
+      @new_gem.doSwap(@xPos(),@yPos())
+      cell.new_gem.doSwap(cell.xPos(),cell.yPos())
+      @commitNew()
+      cell.commitNew()
+    else
+      @new_gem.doSwap(@xPos(),@yPos(),false)
+      cell.new_gem.doSwap(cell.xPos(),cell.yPos(),false)
+      @new_gem = null
+      cell.new_gem = null
+
+  horizontalMatches: () ->
+    [@new_gem].concat @match( @new_gem.id, 'left' ).concat @match( @new_gem.id, 'right' )
+
+  verticalMatches: () ->
+    [@new_gem].concat @match( @new_gem.id, 'up' ).concat @match( @new_gem.id, 'down' ) 
+
+  willClear: ->
+    @horizontalMatches().length >= 3 or @verticalMatches().length >= 3
+
+  match: (id,dir) ->
     cell = switch dir
       when 'left'
         @main.grid.cells[@x-1]?[@y]
@@ -33,18 +53,14 @@ class Cell
       when 'down'
         @main.grid.cells[@x]?[@y-1]
 
-    if cell?.gem.id == @gem.id
-      [cell.gem].concat cell.match(dir)  
+    return [] unless cell
+
+    gem = cell.new_gem or cell.gem
+      
+    if gem.id == id
+      [gem].concat cell.match(id,dir)  
     else 
       [] 
-
-  swapGem: (cell) ->
-    new_gem = cell.gem
-    cell.gem = @gem
-    @gem = new_gem
-
-    @gem.swapTo @xPos(), @yPos(), false 
-    cell.gem.swapTo cell.xPos(), cell.yPos()
 
   squareOpacity: ->
     if @y%2 isnt @x%2 then 0.2 else 0.5
