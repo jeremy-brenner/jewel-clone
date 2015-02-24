@@ -10,8 +10,11 @@ class Main
     @logger.log 'init three'
     @initThree()
     @drawBackground()
+    @grid = new Grid(@grid_width, @grid_height,@)
+    @scene.add( @grid.object )
     @gem_factory = new GemFactory()
     @gem_factory.onload = @gemsLoaded
+    @renderLoop(0)
 
   realWidth: ->
     window.innerWidth * window.devicePixelRatio
@@ -42,7 +45,6 @@ class Main
     @light.position.x = 60
     @light.position.y = 60
     @scene.add( @light )
-    
 
   drawBackground: ->
     bg = new THREE.MeshLambertMaterial
@@ -58,9 +60,7 @@ class Main
 
   gemsLoaded: =>
     @logger.log "gems loaded"
-    @grid = new Grid(@grid_width, @grid_height,@)
-    @scene.add( @grid.object )
-    @renderLoop(0)
+    @grid.addGems()
 
   updateLight: ->
     @light.position.x = ( @input.orientation.gamma * -1 ) + 60

@@ -3,9 +3,6 @@ class Cell
     @x = x
     @y = y
     @main = main
-    @gem = @main.gem_factory.random()
-    @gem.setX @xPos()
-    @gem.setY @yPos()
     @buildSquare()
 
   xPos: ->
@@ -76,12 +73,12 @@ class Cell
     @square.position.y = @yPos()
 
   highlite: (t) ->
-    @gem.object.rotation.z = Math.PI*2-t/400%Math.PI*2
-    @gem.object.scale.x = 1.25
-    @gem.object.scale.y = 1.25
+    @gem?.object.rotation.z = Math.PI*2-t/400%Math.PI*2
+    @gem?.object.scale.x = 1.25
+    @gem?.object.scale.y = 1.25
 
   reset: ->
-    @gem.object.rotation.z = 0    
-    @gem.object.scale.x = 1
-    @gem.object.scale.y = 1
+    @gem?.object.rotation.z = 0    
+    @gem?.object.scale.x = 1
+    @gem?.object.scale.y = 1
 

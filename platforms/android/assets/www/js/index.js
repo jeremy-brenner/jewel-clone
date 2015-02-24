@@ -8,9 +8,6 @@
       this.x = x;
       this.y = y;
       this.main = main;
-      this.gem = this.main.gem_factory.random();
-      this.gem.setX(this.xPos());
-      this.gem.setY(this.yPos());
       this.buildSquare();
     }
 
@@ -103,15 +100,25 @@
     };
 
     Cell.prototype.highlite = function(t) {
-      this.gem.object.rotation.z = Math.PI * 2 - t / 400 % Math.PI * 2;
-      this.gem.object.scale.x = 1.25;
-      return this.gem.object.scale.y = 1.25;
+      var ref, ref1, ref2;
+      if ((ref = this.gem) != null) {
+        ref.object.rotation.z = Math.PI * 2 - t / 400 % Math.PI * 2;
+      }
+      if ((ref1 = this.gem) != null) {
+        ref1.object.scale.x = 1.25;
+      }
+      return (ref2 = this.gem) != null ? ref2.object.scale.y = 1.25 : void 0;
     };
 
     Cell.prototype.reset = function() {
-      this.gem.object.rotation.z = 0;
-      this.gem.object.scale.x = 1;
-      return this.gem.object.scale.y = 1;
+      var ref, ref1, ref2;
+      if ((ref = this.gem) != null) {
+        ref.object.rotation.z = 0;
+      }
+      if ((ref1 = this.gem) != null) {
+        ref1.object.scale.x = 1;
+      }
+      return (ref2 = this.gem) != null ? ref2.object.scale.y = 1 : void 0;
     };
 
     return Cell;
@@ -168,6 +175,21 @@
 
     Gem.prototype.animationComplete = function() {
       return this.animating = false;
+    };
+
+    Gem.prototype.dropTo = function(y, delay) {
+      var drop_tween, length;
+      this.animating = true;
+      length = 1250;
+      this.tween_data = {
+        x: this.object.position.x,
+        y: this.object.position.y,
+        s: 1
+      };
+      drop_tween = new TWEEN.Tween(this.tween_data).to({
+        y: y
+      }, length).easing(TWEEN.Easing.Bounce.Out).onUpdate(this.tweenTick);
+      return drop_tween.onComplete(this.animationComplete).delay(delay).start();
     };
 
     Gem.prototype.doSwap = function(x, y, real) {
@@ -319,13 +341,13 @@
     }
 
     Grid.prototype.animating = function() {
-      var cell, j, k, len, len1, ref, row;
+      var cell, j, k, len, len1, ref, ref1, row;
       ref = this.cells;
       for (j = 0, len = ref.length; j < len; j++) {
         row = ref[j];
         for (k = 0, len1 = row.length; k < len1; k++) {
           cell = row[k];
-          if (cell.gem.animating) {
+          if ((ref1 = cell.gem) != null ? ref1.animating : void 0) {
             return true;
           }
         }
@@ -335,6 +357,9 @@
 
     Grid.prototype.update = function(t) {
       var current, ref, ref1;
+      if (this.animating()) {
+        return;
+      }
       if (this.ready_for_input && this.main.input.touching) {
         this.selected = this.touchedCell(this.main.input.start);
         current = this.touchedCell(this.main.input.move);
@@ -350,7 +375,7 @@
           this.selected.swapGems(current);
         }
       }
-      if (!this.main.input.touching && !this.animating()) {
+      if (!this.main.input.touching) {
         if (this.selected) {
           this.selected.reset();
           this.selected = null;
@@ -361,7 +386,7 @@
     };
 
     Grid.prototype.validMove = function(cell1, cell2) {
-      return cell1 && cell2 && (Math.abs(cell1.x - cell2.x) + Math.abs(cell1.y - cell2.y)) <= 1;
+      return cell1 && cell1.gem && cell2 && cell2.gem && (Math.abs(cell1.x - cell2.x) + Math.abs(cell1.y - cell2.y)) <= 1;
     };
 
     Grid.prototype.stopInput = function() {
@@ -388,6 +413,30 @@
       return this.main.realWidth() / (this.w + this.margin * 2) * i;
     };
 
+    Grid.prototype.addGems = function() {
+      var cell, g, j, len, ref, results, row;
+      ref = this.cells;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        row = ref[j];
+        results.push((function() {
+          var k, len1, results1;
+          results1 = [];
+          for (k = 0, len1 = row.length; k < len1; k++) {
+            cell = row[k];
+            g = this.main.gem_factory.random();
+            g.setX(cell.xPos());
+            g.setY(this.h * 2);
+            cell.gem = g;
+            this.object.add(cell.gem.object);
+            results1.push(g.dropTo(cell.yPos(), 1000 + cell.yPos() * 50 + cell.xPos() * 10));
+          }
+          return results1;
+        }).call(this));
+      }
+      return results;
+    };
+
     Grid.prototype.buildBoard = function() {
       var cell, j, len, ref, results, row;
       ref = this.cells;
@@ -399,8 +448,7 @@
           results1 = [];
           for (k = 0, len1 = row.length; k < len1; k++) {
             cell = row[k];
-            this.object.add(cell.square);
-            results1.push(this.object.add(cell.gem.object));
+            results1.push(this.object.add(cell.square));
           }
           return results1;
         }).call(this));
@@ -518,8 +566,11 @@
       this.logger.log('init three');
       this.initThree();
       this.drawBackground();
+      this.grid = new Grid(this.grid_width, this.grid_height, this);
+      this.scene.add(this.grid.object);
       this.gem_factory = new GemFactory();
       this.gem_factory.onload = this.gemsLoaded;
+      this.renderLoop(0);
     }
 
     Main.prototype.realWidth = function() {
@@ -568,9 +619,7 @@
 
     Main.prototype.gemsLoaded = function() {
       this.logger.log("gems loaded");
-      this.grid = new Grid(this.grid_width, this.grid_height, this);
-      this.scene.add(this.grid.object);
-      return this.renderLoop(0);
+      return this.grid.addGems();
     };
 
     Main.prototype.updateLight = function() {

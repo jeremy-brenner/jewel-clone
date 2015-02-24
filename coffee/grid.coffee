@@ -8,7 +8,7 @@ class Grid
     @object = new THREE.Object3D()
     @ready_for_input = true
     @buildBoard()
-
+    
     @object.position.x = @boardScale(@margin)
     @object.position.y = @boardScale(@margin)
 
@@ -17,11 +17,12 @@ class Grid
   animating: ->
     for row in @cells
       for cell in row
-        return true if cell.gem.animating
+        return true if cell.gem?.animating
     false
-    
+
   update: (t) ->
-    if @ready_for_input and @main.input.touching 
+    return if @animating()
+    if @ready_for_input and @main.input.touching
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
       return @stopInput() unless @validMove( @selected, current )
@@ -32,7 +33,7 @@ class Grid
         @stopInput()
         @selected.swapGems current
   
-    if not @main.input.touching and not @animating()
+    if not @main.input.touching
       if @selected
         @selected.reset()
         @selected = null
@@ -40,7 +41,7 @@ class Grid
       @selected?.reset()
 
   validMove: (cell1, cell2) ->
-    cell1 and cell2 and ( Math.abs(cell1.x-cell2.x) + Math.abs(cell1.y-cell2.y) ) <= 1
+    cell1 and cell1.gem and cell2 and cell2.gem and ( Math.abs(cell1.x-cell2.x) + Math.abs(cell1.y-cell2.y) ) <= 1
 
   stopInput: ->
     @ready_for_input = false
@@ -58,11 +59,20 @@ class Grid
   boardScale: (i=1)->
     @main.realWidth() / (@w+@margin*2) * i
 
+  addGems: ->
+    for row in @cells
+      for cell in row
+        g = @main.gem_factory.random()
+        g.setX( cell.xPos() )
+        g.setY( @h*2 ) 
+        cell.gem = g
+        @object.add( cell.gem.object )
+        g.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10
+
   buildBoard: ->
     for row in @cells
       for cell in row
         @object.add( cell.square )
-        @object.add( cell.gem.object )
 
   buildCells: ->
     for x in [0...@h]

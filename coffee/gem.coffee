@@ -18,6 +18,16 @@ class Gem
   animationComplete: =>
     @animating = false
 
+  dropTo: (y,delay) ->
+    @animating = true
+    length = 1250
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
+    drop_tween = new TWEEN.Tween( @tween_data )
+             .to( { y: y }, length ) 
+             .easing( TWEEN.Easing.Bounce.Out )
+             .onUpdate( @tweenTick )
+    drop_tween.onComplete( @animationComplete ).delay(delay).start()
+
   doSwap: (x,y,real=true) ->
     @animating = true
     @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
