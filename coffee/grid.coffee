@@ -25,9 +25,12 @@ class Grid
       return true if cell.gem?.animating
     false
 
+  clearDoomed: ->
+    @object.remove( gem.object ) for gem in @doomedGems()
+
   update: (t) ->
     return if @animating()
-    @object.remove( gem.object ) for gem in @doomedGems()
+    @clearDoomed()
     if @ready_for_input and @main.input.touching
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
@@ -39,12 +42,11 @@ class Grid
         @stopInput()
         @selected.swapGems current
   
-    if not @main.input.touching
+    if not @main.input.touching and not @animating()
       if @selected
         @selected.reset()
         @selected = null
       @ready_for_input = true
-      @selected?.reset()
 
   validMove: (cell1, cell2) ->
     cell1 and cell1.gem and cell2 and cell2.gem and ( Math.abs(cell1.x-cell2.x) + Math.abs(cell1.y-cell2.y) ) <= 1

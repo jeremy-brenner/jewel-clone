@@ -26,15 +26,15 @@ class Cell
     cell.new_gem = @gem
 
     if @willClear() or cell.willClear()
-      @new_gem.doSwap(@xPos(),@yPos())
-      cell.new_gem.doSwap(cell.xPos(),cell.yPos())
+      @new_gem.doSwap(@xPos(),@yPos(),true,false)
+      cell.new_gem.doSwap(cell.xPos(),cell.yPos(),true,true)
       @commitNew()
       cell.commitNew()
       @flagCleared()
       cell.flagCleared()
     else
-      @new_gem.doSwap(@xPos(),@yPos(),false)
-      cell.new_gem.doSwap(cell.xPos(),cell.yPos(),false)
+      @new_gem.doSwap(@xPos(),@yPos(),false,false)
+      cell.new_gem.doSwap(cell.xPos(),cell.yPos(),false,true)
       @new_gem = null
       cell.new_gem = null
 
@@ -82,12 +82,9 @@ class Cell
     @square.position.y = @yPos()
 
   highlite: (t) ->
-    @gem?.object.rotation.z = Math.PI*2-t/400%Math.PI*2
-    @gem?.object.scale.x = 1.25
-    @gem?.object.scale.y = 1.25
+    @gem?.highlite(t)
 
   reset: ->
-    @gem?.object.rotation.z = 0    
-    @gem?.object.scale.x = 1
-    @gem?.object.scale.y = 1
+    @gem?.reset()
+
 

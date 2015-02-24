@@ -27,7 +27,6 @@
     Cell.prototype.flagCleared = function() {
       var j, k, len, len1, m, ref, ref1, results;
       if (this.horizontalMatches().length >= 3) {
-        console.log('clearning h', this.horizontalMatches());
         ref = this.horizontalMatches();
         for (j = 0, len = ref.length; j < len; j++) {
           m = ref[j];
@@ -35,7 +34,6 @@
         }
       }
       if (this.verticalMatches().length >= 3) {
-        console.log('clearning v', this.verticalMatches());
         ref1 = this.verticalMatches();
         results = [];
         for (k = 0, len1 = ref1.length; k < len1; k++) {
@@ -50,15 +48,15 @@
       this.new_gem = cell.gem;
       cell.new_gem = this.gem;
       if (this.willClear() || cell.willClear()) {
-        this.new_gem.doSwap(this.xPos(), this.yPos());
-        cell.new_gem.doSwap(cell.xPos(), cell.yPos());
+        this.new_gem.doSwap(this.xPos(), this.yPos(), true, false);
+        cell.new_gem.doSwap(cell.xPos(), cell.yPos(), true, true);
         this.commitNew();
         cell.commitNew();
         this.flagCleared();
         return cell.flagCleared();
       } else {
-        this.new_gem.doSwap(this.xPos(), this.yPos(), false);
-        cell.new_gem.doSwap(cell.xPos(), cell.yPos(), false);
+        this.new_gem.doSwap(this.xPos(), this.yPos(), false, false);
+        cell.new_gem.doSwap(cell.xPos(), cell.yPos(), false, true);
         this.new_gem = null;
         return cell.new_gem = null;
       }
@@ -127,25 +125,13 @@
     };
 
     Cell.prototype.highlite = function(t) {
-      var ref, ref1, ref2;
-      if ((ref = this.gem) != null) {
-        ref.object.rotation.z = Math.PI * 2 - t / 400 % Math.PI * 2;
-      }
-      if ((ref1 = this.gem) != null) {
-        ref1.object.scale.x = 1.25;
-      }
-      return (ref2 = this.gem) != null ? ref2.object.scale.y = 1.25 : void 0;
+      var ref;
+      return (ref = this.gem) != null ? ref.highlite(t) : void 0;
     };
 
     Cell.prototype.reset = function() {
-      var ref, ref1, ref2;
-      if ((ref = this.gem) != null) {
-        ref.object.rotation.z = 0;
-      }
-      if ((ref1 = this.gem) != null) {
-        ref1.object.scale.x = 1;
-      }
-      return (ref2 = this.gem) != null ? ref2.object.scale.y = 1 : void 0;
+      var ref;
+      return (ref = this.gem) != null ? ref.reset() : void 0;
     };
 
     return Cell;
@@ -187,10 +173,12 @@
       this.object = new THREE.Object3D();
       this.mesh = new THREE.Mesh(def.geometry, def.material);
       this.outline = new THREE.Mesh(def.geometry, def.outline);
+      this.mesh.position.z = 2;
       this.outline.scale.multiplyScalar(1.125);
       this.animating = false;
       this.object.add(this.mesh);
       this.object.add(this.outline);
+      this.swap_length = 750;
     }
 
     Gem.prototype.setX = function(x) {
@@ -202,6 +190,7 @@
     };
 
     Gem.prototype.animationComplete = function() {
+      console.log('animation complete');
       return this.animating = false;
     };
 
@@ -220,10 +209,12 @@
       return drop_tween.onComplete(this.animationComplete).delay(delay).start();
     };
 
-    Gem.prototype.doSwap = function(x, y, real) {
-      var t, t2;
+    Gem.prototype.doSwap = function(x, y, real, front) {
       if (real == null) {
         real = true;
+      }
+      if (front == null) {
+        front = true;
       }
       this.animating = true;
       this.tween_data = {
@@ -232,48 +223,92 @@
         s: 1
       };
       if (real) {
-        this.tweens = this.swapTweens(x, y);
-        this.tweens.zoom_tween.start();
-        return this.tweens.swap_tween.onComplete(this.animationComplete).start();
+        this.zoomTween(front).start();
+        return this.realSwapTween(x, y).start();
       } else {
-        t = this.swapTweens(x, y);
-        t2 = this.swapTweens(this.object.position.x, this.object.position.y);
-        return this.tweens = {
-          zoom_tween: t.zoom_tween.chain(t2.zoom_tween).start(),
-          swap_tween: t.swap_tween.chain(t2.swap_tween).onComplete(this.animationComplete).start()
-        };
+        this.failedZoomTween(front).start();
+        return this.failedSwapTween(x, y).start();
       }
     };
 
-    Gem.prototype.swapTweens = function(x, y, front) {
-      var length, sc, swap_tween, zoom_tween_end, zoom_tween_start;
+    Gem.prototype.zoomTween = function(front) {
+      var sc, zoom_tween_end, zoom_tween_start;
       if (front == null) {
         front = true;
       }
-      length = 500;
-      sc = front ? 0.2 : -0.2;
-      swap_tween = new TWEEN.Tween(this.tween_data).to({
-        x: x,
-        y: y
-      }, length).easing(TWEEN.Easing.Back.InOut).onUpdate(this.tweenTick);
+      sc = front ? 0.25 : -0.25;
       zoom_tween_start = new TWEEN.Tween(this.tween_data).to({
         s: 1 + sc
-      }, length / 2).easing(TWEEN.Easing.Quadratic.Out).onUpdate(this.tweenTick);
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.In).onUpdate(this.tweenTick);
       zoom_tween_end = new TWEEN.Tween(this.tween_data).to({
         s: 1
-      }, length / 2).easing(TWEEN.Easing.Quadratic.In).onUpdate(this.tweenTick);
-      return {
-        zoom_tween: zoom_tween_start.chain(zoom_tween_end),
-        swap_tween: swap_tween
-      };
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.Out).onUpdate(this.tweenTick);
+      return zoom_tween_start.chain(zoom_tween_end);
+    };
+
+    Gem.prototype.realSwapTween = function(x, y) {
+      return new TWEEN.Tween(this.tween_data).to({
+        x: x,
+        y: y
+      }, this.swap_length).easing(TWEEN.Easing.Back.InOut).onUpdate(this.tweenTick).onComplete(this.animationComplete);
+    };
+
+    Gem.prototype.failedSwapTween = function(x, y) {
+      var swap_end, swap_start;
+      swap_start = new TWEEN.Tween(this.tween_data).to({
+        x: x,
+        y: y
+      }, this.swap_length).easing(TWEEN.Easing.Circular.In).onUpdate(this.tweenTick);
+      swap_end = new TWEEN.Tween(this.tween_data).to({
+        x: this.object.position.x,
+        y: this.object.position.y
+      }, this.swap_length).easing(TWEEN.Easing.Circular.Out).onUpdate(this.tweenTick).onComplete(this.animationComplete);
+      return swap_start.chain(swap_end);
+    };
+
+    Gem.prototype.failedZoomTween = function(front) {
+      var sc, z;
+      if (front == null) {
+        front = true;
+      }
+      sc = front ? 0.25 : -0.25;
+      z = [];
+      z[0] = new TWEEN.Tween(this.tween_data).to({
+        s: 1 + sc
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.In).onUpdate(this.tweenTick);
+      z[1] = new TWEEN.Tween(this.tween_data).to({
+        s: 1
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.Out).onUpdate(this.tweenTick);
+      z[2] = new TWEEN.Tween(this.tween_data).to({
+        s: 1 - sc
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.In).onUpdate(this.tweenTick);
+      z[3] = new TWEEN.Tween(this.tween_data).to({
+        s: 1
+      }, this.swap_length / 2).easing(TWEEN.Easing.Circular.Out).onUpdate(this.tweenTick);
+      z[0].chain(z[1]);
+      z[1].chain(z[2]);
+      z[2].chain(z[3]);
+      return z[0];
     };
 
     Gem.prototype.tweenTick = function() {
       this.object.position.x = this.tween_data.x;
       this.object.position.y = this.tween_data.y;
-      this.object.position.z = this.tween_data.s - 1;
+      this.object.position.z = this.tween_data.s;
       this.object.scale.x = this.tween_data.s;
       return this.object.scale.y = this.tween_data.s;
+    };
+
+    Gem.prototype.highlite = function(t) {
+      this.object.rotation.z = Math.PI * 2 - t / 400 % Math.PI * 2;
+      this.object.scale.x = 1.25;
+      return this.object.scale.y = 1.25;
+    };
+
+    Gem.prototype.reset = function() {
+      this.object.rotation.z = 0;
+      this.object.scale.x = 1;
+      return this.object.scale.y = 1;
     };
 
     return Gem;
@@ -398,16 +433,23 @@
       return false;
     };
 
+    Grid.prototype.clearDoomed = function() {
+      var gem, j, len, ref, results;
+      ref = this.doomedGems();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        gem = ref[j];
+        results.push(this.object.remove(gem.object));
+      }
+      return results;
+    };
+
     Grid.prototype.update = function(t) {
-      var current, gem, j, len, ref, ref1, ref2;
+      var current, ref;
       if (this.animating()) {
         return;
       }
-      ref = this.doomedGems();
-      for (j = 0, len = ref.length; j < len; j++) {
-        gem = ref[j];
-        this.object.remove(gem.object);
-      }
+      this.clearDoomed();
       if (this.ready_for_input && this.main.input.touching) {
         this.selected = this.touchedCell(this.main.input.start);
         current = this.touchedCell(this.main.input.move);
@@ -415,21 +457,20 @@
           return this.stopInput();
         }
         if (this.selected === current) {
-          if ((ref1 = this.selected) != null) {
-            ref1.highlite(t);
+          if ((ref = this.selected) != null) {
+            ref.highlite(t);
           }
         } else {
           this.stopInput();
           this.selected.swapGems(current);
         }
       }
-      if (!this.main.input.touching) {
+      if (!this.main.input.touching && !this.animating()) {
         if (this.selected) {
           this.selected.reset();
           this.selected = null;
         }
-        this.ready_for_input = true;
-        return (ref2 = this.selected) != null ? ref2.reset() : void 0;
+        return this.ready_for_input = true;
       }
     };
 
