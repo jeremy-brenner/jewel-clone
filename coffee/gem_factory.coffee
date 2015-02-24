@@ -6,7 +6,7 @@ class GemFactory
     @outline = new THREE.MeshBasicMaterial
       color: 'black'  
       side: THREE.BackSide 
-      
+    @gemid = 0  
     @loadGems()
 
   loadGems: ->
@@ -42,7 +42,7 @@ class GemFactory
       shininess: 60
   
   buildGem: (def) ->
-    new Gem(def)
+    new Gem(def,@gemid++)
 
   random: ->
     @buildGem @defs[Math.floor(Math.random() * @defs.length)]

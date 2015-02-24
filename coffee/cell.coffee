@@ -15,6 +15,12 @@ class Cell
     @gem = @new_gem
     @new_gem = null
 
+  flagCleared: ->
+    if @horizontalMatches().length >= 3
+      m.doomed = true for m in @horizontalMatches()
+    if @verticalMatches().length >= 3
+      m.doomed = true for m in @verticalMatches()
+
   swapGems: (cell) ->
     @new_gem = cell.gem
     cell.new_gem = @gem
@@ -24,22 +30,27 @@ class Cell
       cell.new_gem.doSwap(cell.xPos(),cell.yPos())
       @commitNew()
       cell.commitNew()
+      @flagCleared()
+      cell.flagCleared()
     else
       @new_gem.doSwap(@xPos(),@yPos(),false)
       cell.new_gem.doSwap(cell.xPos(),cell.yPos(),false)
       @new_gem = null
       cell.new_gem = null
 
+  matchGem: ->
+    @new_gem or @gem
+
   horizontalMatches: () ->
-    [@new_gem].concat @match( @new_gem.id, 'left' ).concat @match( @new_gem.id, 'right' )
+    [@matchGem()].concat( @match( @matchGem().def_id, 'left' ) ).concat @match( @matchGem().def_id, 'right' )
 
   verticalMatches: () ->
-    [@new_gem].concat @match( @new_gem.id, 'up' ).concat @match( @new_gem.id, 'down' ) 
+    [@matchGem()].concat( @match( @matchGem().def_id, 'up' ) ).concat @match( @matchGem().def_id, 'down' ) 
 
   willClear: ->
     @horizontalMatches().length >= 3 or @verticalMatches().length >= 3
 
-  match: (id,dir) ->
+  match: (def_id,dir) ->
     cell = switch dir
       when 'left'
         @main.grid.cells[@x-1]?[@y]
@@ -52,12 +63,10 @@ class Cell
 
     return [] unless cell
 
-    gem = cell.new_gem or cell.gem
-      
-    if gem.id == id
-      [gem].concat cell.match(id,dir)  
+    if cell.matchGem().def_id == def_id
+      [cell.matchGem()].concat cell.match(def_id,dir)
     else 
-      [] 
+      []
 
   squareOpacity: ->
     if @y%2 isnt @x%2 then 0.2 else 0.5

@@ -24,6 +24,28 @@
       return this.new_gem = null;
     };
 
+    Cell.prototype.flagCleared = function() {
+      var j, k, len, len1, m, ref, ref1, results;
+      if (this.horizontalMatches().length >= 3) {
+        console.log('clearning h', this.horizontalMatches());
+        ref = this.horizontalMatches();
+        for (j = 0, len = ref.length; j < len; j++) {
+          m = ref[j];
+          m.doomed = true;
+        }
+      }
+      if (this.verticalMatches().length >= 3) {
+        console.log('clearning v', this.verticalMatches());
+        ref1 = this.verticalMatches();
+        results = [];
+        for (k = 0, len1 = ref1.length; k < len1; k++) {
+          m = ref1[k];
+          results.push(m.doomed = true);
+        }
+        return results;
+      }
+    };
+
     Cell.prototype.swapGems = function(cell) {
       this.new_gem = cell.gem;
       cell.new_gem = this.gem;
@@ -31,7 +53,9 @@
         this.new_gem.doSwap(this.xPos(), this.yPos());
         cell.new_gem.doSwap(cell.xPos(), cell.yPos());
         this.commitNew();
-        return cell.commitNew();
+        cell.commitNew();
+        this.flagCleared();
+        return cell.flagCleared();
       } else {
         this.new_gem.doSwap(this.xPos(), this.yPos(), false);
         cell.new_gem.doSwap(cell.xPos(), cell.yPos(), false);
@@ -40,20 +64,24 @@
       }
     };
 
+    Cell.prototype.matchGem = function() {
+      return this.new_gem || this.gem;
+    };
+
     Cell.prototype.horizontalMatches = function() {
-      return [this.new_gem].concat(this.match(this.new_gem.id, 'left').concat(this.match(this.new_gem.id, 'right')));
+      return [this.matchGem()].concat(this.match(this.matchGem().def_id, 'left')).concat(this.match(this.matchGem().def_id, 'right'));
     };
 
     Cell.prototype.verticalMatches = function() {
-      return [this.new_gem].concat(this.match(this.new_gem.id, 'up').concat(this.match(this.new_gem.id, 'down')));
+      return [this.matchGem()].concat(this.match(this.matchGem().def_id, 'up')).concat(this.match(this.matchGem().def_id, 'down'));
     };
 
     Cell.prototype.willClear = function() {
       return this.horizontalMatches().length >= 3 || this.verticalMatches().length >= 3;
     };
 
-    Cell.prototype.match = function(id, dir) {
-      var cell, gem;
+    Cell.prototype.match = function(def_id, dir) {
+      var cell;
       cell = (function() {
         var ref, ref1, ref2, ref3;
         switch (dir) {
@@ -70,9 +98,8 @@
       if (!cell) {
         return [];
       }
-      gem = cell.new_gem || cell.gem;
-      if (gem.id === id) {
-        return [gem].concat(cell.match(id, dir));
+      if (cell.matchGem().def_id === def_id) {
+        return [cell.matchGem()].concat(cell.match(def_id, dir));
       } else {
         return [];
       }
@@ -152,10 +179,11 @@
   })();
 
   Gem = (function() {
-    function Gem(def) {
+    function Gem(def, id) {
       this.tweenTick = bind(this.tweenTick, this);
       this.animationComplete = bind(this.animationComplete, this);
-      this.id = def.id;
+      this.id = id;
+      this.def_id = def.id;
       this.object = new THREE.Object3D();
       this.mesh = new THREE.Mesh(def.geometry, def.material);
       this.outline = new THREE.Mesh(def.geometry, def.outline);
@@ -262,6 +290,7 @@
         color: 'black',
         side: THREE.BackSide
       });
+      this.gemid = 0;
       this.loadGems();
     }
 
@@ -312,7 +341,7 @@
     };
 
     GemFactory.prototype.buildGem = function(def) {
-      return new Gem(def);
+      return new Gem(def, this.gemid++);
     };
 
     GemFactory.prototype.random = function() {
@@ -340,25 +369,44 @@
       this.object.scale.multiplyScalar(this.boardScale());
     }
 
-    Grid.prototype.animating = function() {
-      var cell, j, k, len, len1, ref, ref1, row;
-      ref = this.cells;
+    Grid.prototype.flatCells = function() {
+      return Array.prototype.concat.apply([], this.cells);
+    };
+
+    Grid.prototype.doomedGems = function() {
+      var cell, j, len, ref, ref1, results;
+      ref = this.flatCells();
+      results = [];
       for (j = 0, len = ref.length; j < len; j++) {
-        row = ref[j];
-        for (k = 0, len1 = row.length; k < len1; k++) {
-          cell = row[k];
-          if ((ref1 = cell.gem) != null ? ref1.animating : void 0) {
-            return true;
-          }
+        cell = ref[j];
+        if ((ref1 = cell.gem) != null ? ref1.doomed : void 0) {
+          results.push(cell.gem);
+        }
+      }
+      return results;
+    };
+
+    Grid.prototype.animating = function() {
+      var cell, j, len, ref, ref1;
+      ref = this.flatCells();
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        if ((ref1 = cell.gem) != null ? ref1.animating : void 0) {
+          return true;
         }
       }
       return false;
     };
 
     Grid.prototype.update = function(t) {
-      var current, ref, ref1;
+      var current, gem, j, len, ref, ref1, ref2;
       if (this.animating()) {
         return;
+      }
+      ref = this.doomedGems();
+      for (j = 0, len = ref.length; j < len; j++) {
+        gem = ref[j];
+        this.object.remove(gem.object);
       }
       if (this.ready_for_input && this.main.input.touching) {
         this.selected = this.touchedCell(this.main.input.start);
@@ -367,8 +415,8 @@
           return this.stopInput();
         }
         if (this.selected === current) {
-          if ((ref = this.selected) != null) {
-            ref.highlite(t);
+          if ((ref1 = this.selected) != null) {
+            ref1.highlite(t);
           }
         } else {
           this.stopInput();
@@ -381,7 +429,7 @@
           this.selected = null;
         }
         this.ready_for_input = true;
-        return (ref1 = this.selected) != null ? ref1.reset() : void 0;
+        return (ref2 = this.selected) != null ? ref2.reset() : void 0;
       }
     };
 
@@ -438,20 +486,12 @@
     };
 
     Grid.prototype.buildBoard = function() {
-      var cell, j, len, ref, results, row;
-      ref = this.cells;
+      var cell, j, len, ref, results;
+      ref = this.flatCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
-        row = ref[j];
-        results.push((function() {
-          var k, len1, results1;
-          results1 = [];
-          for (k = 0, len1 = row.length; k < len1; k++) {
-            cell = row[k];
-            results1.push(this.object.add(cell.square));
-          }
-          return results1;
-        }).call(this));
+        cell = ref[j];
+        results.push(this.object.add(cell.square));
       }
       return results;
     };

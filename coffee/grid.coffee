@@ -14,14 +14,20 @@ class Grid
 
     @object.scale.multiplyScalar @boardScale()
 
+  flatCells: ->
+    Array.prototype.concat.apply([],@cells)
+
+  doomedGems: ->
+    cell.gem for cell in @flatCells() when cell.gem?.doomed
+
   animating: ->
-    for row in @cells
-      for cell in row
-        return true if cell.gem?.animating
+    for cell in @flatCells()
+      return true if cell.gem?.animating
     false
 
   update: (t) ->
     return if @animating()
+    @object.remove( gem.object ) for gem in @doomedGems()
     if @ready_for_input and @main.input.touching
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
@@ -70,9 +76,8 @@ class Grid
         g.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10
 
   buildBoard: ->
-    for row in @cells
-      for cell in row
-        @object.add( cell.square )
+    for cell in @flatCells()
+      @object.add( cell.square )
 
   buildCells: ->
     for x in [0...@h]

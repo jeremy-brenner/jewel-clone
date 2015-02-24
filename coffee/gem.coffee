@@ -1,6 +1,7 @@
 class Gem
-  constructor: (def) ->
-    @id = def.id
+  constructor: (def,id) ->
+    @id = id
+    @def_id = def.id
     @object = new THREE.Object3D()
     @mesh = new THREE.Mesh( def.geometry, def.material )
     @outline = new THREE.Mesh( def.geometry, def.outline )
