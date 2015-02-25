@@ -371,7 +371,7 @@
       sc = front ? 1.5 : 0.5;
       zoom_tween_start = new TWEEN.Tween(this.tween_data).to({
         s: sc,
-        z: 1 - sc
+        z: sc - 1
       }, this.swap_length / 2).easing(TWEEN.Easing.Circular.Out).onUpdate(this.tweenTick);
       zoom_tween_end = new TWEEN.Tween(this.tween_data).to({
         s: 1,

@@ -47,7 +47,7 @@ class Gem
   zoomTween: (front=true) ->
     sc = if front then 1.5 else 0.5
     zoom_tween_start = new TWEEN.Tween( @tween_data )
-             .to( { s: sc, z: 1-sc }, @swap_length/2 ) 
+             .to( { s: sc, z: sc-1 }, @swap_length/2 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
     zoom_tween_end = new TWEEN.Tween( @tween_data )

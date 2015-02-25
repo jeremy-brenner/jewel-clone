@@ -254,10 +254,6 @@ TWEEN.Tween = function ( object ) {
 
 	};
 
-  this.chainedTweens = function () {
-  	return _chainedTweens;
-  }
-
 	this.onStart = function ( callback ) {
 
 		_onStartCallback = callback;
