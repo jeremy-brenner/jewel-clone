@@ -8,6 +8,7 @@ class Main
     @fps = new Fps()
     @input = new Input()
     @roaming_light = new RoamingLight( @realWidth(), @input)
+    window.game_audio = new AudioManager(['sounds/woosh.mp3'])
     @logger.log 'init three'
     @initThree()
     @score = new Score()

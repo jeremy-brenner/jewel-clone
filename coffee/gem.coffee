@@ -41,6 +41,8 @@ class Gem
       @failedZoomTween(front).start()
       @failedSwapTween(x,y).start()
 
+  swapStart: ->
+    game_audio.play('woosh')
 
   zoomTween: (front=true) ->
     sc = if front then 1.5 else 0.5
@@ -60,17 +62,20 @@ class Gem
              .to( { x: x, y: y }, @swap_length ) 
              .easing( TWEEN.Easing.Back.InOut )
              .onUpdate( @tweenTick )
+             .onStart( @swapStart )
              .onComplete( @animationComplete )
 
   failedSwapTween: (x,y) ->
     swap_start = new TWEEN.Tween( @tween_data )
              .to( { x: x, y: y }, @swap_length/1.5 ) 
              .easing( TWEEN.Easing.Back.In )
+             .onStart( @swapStart )
              .onUpdate( @tweenTick )
 
     swap_end = new TWEEN.Tween( @tween_data )
              .to( { x: @object.position.x, y: @object.position.y }, @swap_length/1.5 ) 
              .easing( TWEEN.Easing.Quadratic.InOut )
+             .onStart( @swapStart )
              .onUpdate( @tweenTick )
              .onComplete( @animationComplete )
     swap_start.chain swap_end
