@@ -50,13 +50,13 @@ class Grid
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
-        cell.gem.dropTo cell.yPos(), 0, -cell.yPos(), 500
+        cell.gem.dropTo cell.yPos(), 0, 0, 500
       else
         new_cell = @cells[cell.x][y]
         if new_cell.gem
           cell.gem = new_cell.gem
           new_cell.gem = null
-          cell.gem.dropTo cell.yPos(), 0, -cell.yPos(), 500
+          cell.gem.dropTo cell.yPos(), 0, 0, 500
           @fillCell(new_cell)
           break  
 
@@ -64,7 +64,10 @@ class Grid
     return if @animating()
     @clearDoomed()
     @fillHoles() while @emptyCells().length > 0
-    @checkDirty()
+    if @dirtyCells().length > 0 
+      @checkDirty()
+    else
+      @main.score.chain = 0
 
     if @ready_for_input and @main.input.touching
       @selected = @touchedCell(@main.input.start)

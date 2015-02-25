@@ -40,13 +40,17 @@ canvas {
 .debug {
   white-space: pre;
   position: absolute;
-  display: inline-block;
+  display: none;
   padding: 10px;
   margin: 10px;
   background-color: black;
   border: 2px solid gray;
   color: white;
   z-index: 10;    
+}
+
+.debug.show {
+  display: inline-block;
 }
 
 #fps {

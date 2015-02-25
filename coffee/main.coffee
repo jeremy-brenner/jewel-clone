@@ -3,12 +3,14 @@ class Main
   constructor: ->
     @grid_width = 8
     @grid_height = 8
-    @logger = new Logger()
+    @logger = new Logger(false)
     @logger.log "logger started"
     @fps = new Fps()
     @input = new Input()
+    @roaming_light = new RoamingLight( @realWidth(), @input)
     @logger.log 'init three'
     @initThree()
+    @score = new Score()
     @grid = new Grid(@grid_width, @grid_height,@)
     @drawBackground()
     @scene.add( @grid.object )
@@ -40,11 +42,8 @@ class Main
     document.body.appendChild @renderer.domElement 
 
     @scene.add( new THREE.AmbientLight( 0x666666 ) )
-    @light = new THREE.DirectionalLight( 0xffffff, 1 )
-    @light.position.z = 100
-    @light.position.x = 60
-    @light.position.y = 60
-    @scene.add( @light )
+
+    @scene.add( @roaming_light.object )
 
   drawBackground: ->
     bg = new THREE.MeshLambertMaterial
@@ -62,15 +61,11 @@ class Main
     @logger.log "gems loaded"
     @grid.addGems()
 
-  updateLight: ->
-    @light.position.x = ( @input.orientation.gamma * -1 ) + 60
-    @light.position.y = ( @input.orientation.beta ) + 60
-
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     TWEEN.update t
 
-    @updateLight()
+    @roaming_light.update t
     @grid.update t
     @renderer.render( @scene, @camera )
     @fps.update t

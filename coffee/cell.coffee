@@ -17,11 +17,13 @@ class Cell
 
   flagCleared: ->
     if @horizontalMatches().length >= 3
+      @main.score.add @horizontalMatches().length
       m.doomed = true for m in @horizontalMatches()
     if @verticalMatches().length >= 3
+      @main.score.add @verticalMatches().length
       m.doomed = true for m in @verticalMatches()
     @dirty = false
-    
+
   swapGems: (cell) ->
     @new_gem = cell.gem
     cell.new_gem = @gem

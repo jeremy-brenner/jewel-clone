@@ -19,6 +19,7 @@ class Gem
     @object.position.y = y
  
   animationComplete: =>
+    @object.position.z = 0
     @animating = false
 
   dropTo: (y,delay,z,length=1250) ->
@@ -32,7 +33,7 @@ class Gem
 
   doSwap: (x,y,real=true,front=true) ->
     @animating = true
-    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 1 }
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0 }
     if real
       @zoomTween(front).start()
       @realSwapTween(x,y).start()
@@ -44,12 +45,12 @@ class Gem
   zoomTween: (front=true) ->
     sc = if front then 1.5 else 0.5
     zoom_tween_start = new TWEEN.Tween( @tween_data )
-             .to( { s: sc, z: sc }, @swap_length/2 ) 
-             .easing( TWEEN.Easing.Circular.In )
+             .to( { s: sc, z: 1-sc }, @swap_length/2 ) 
+             .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
     zoom_tween_end = new TWEEN.Tween( @tween_data )
-             .to( { s: 1, z: 1 }, @swap_length/2 ) 
-             .easing( TWEEN.Easing.Circular.Out )
+             .to( { s: 1, z: 0 }, @swap_length/2 ) 
+             .easing( TWEEN.Easing.Circular.In )
              .onUpdate( @tweenTick )
 
     zoom_tween_start.chain zoom_tween_end
@@ -78,19 +79,19 @@ class Gem
     sc = if front then 1.5 else 0.5
 
     a = new TWEEN.Tween( @tween_data )
-             .to( { s: sc, z: sc }, @swap_length/3 ) 
+             .to( { s: sc, z: sc-1 }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
     b = new TWEEN.Tween( @tween_data )
-             .to( { s: 1, z: 1 }, @swap_length/3 ) 
+             .to( { s: 1, z: 0 }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.In )
              .onUpdate( @tweenTick )
     c = new TWEEN.Tween( @tween_data )
-             .to( { s: 2-sc, z: 2-sc }, @swap_length/3 ) 
+             .to( { s: 2-sc, z: 1-sc }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.In )
              .onUpdate( @tweenTick )
     d = new TWEEN.Tween( @tween_data )
-             .to( { s: 1, z: 1 }, @swap_length/3 ) 
+             .to( { s: 1, z: 0 }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
     
