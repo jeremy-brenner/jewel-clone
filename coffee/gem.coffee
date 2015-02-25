@@ -10,7 +10,7 @@ class Gem
     @animating = false
     @object.add @mesh
     @object.add @outline
-    @swap_length = 500
+    @swap_length = 400
 
   setX: (x) ->
     @object.position.x = x
@@ -19,12 +19,10 @@ class Gem
     @object.position.y = y
  
   animationComplete: =>
-    console.log 'animation complete'
     @animating = false
 
-  dropTo: (y,delay,z) ->
+  dropTo: (y,delay,z,length=1250) ->
     @animating = true
-    length = 1250
     @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: z }
     drop_tween = new TWEEN.Tween( @tween_data )
              .to( { y: y }, length ) 

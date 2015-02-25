@@ -25,7 +25,7 @@
     };
 
     Cell.prototype.flagCleared = function() {
-      var j, k, len, len1, m, ref, ref1, results;
+      var j, k, len, len1, m, ref, ref1;
       if (this.horizontalMatches().length >= 3) {
         ref = this.horizontalMatches();
         for (j = 0, len = ref.length; j < len; j++) {
@@ -35,13 +35,12 @@
       }
       if (this.verticalMatches().length >= 3) {
         ref1 = this.verticalMatches();
-        results = [];
         for (k = 0, len1 = ref1.length; k < len1; k++) {
           m = ref1[k];
-          results.push(m.doomed = true);
+          m.doomed = true;
         }
-        return results;
       }
+      return this.dirty = false;
     };
 
     Cell.prototype.swapGems = function(cell) {
@@ -178,7 +177,7 @@
       this.animating = false;
       this.object.add(this.mesh);
       this.object.add(this.outline);
-      this.swap_length = 500;
+      this.swap_length = 400;
     }
 
     Gem.prototype.setX = function(x) {
@@ -190,14 +189,15 @@
     };
 
     Gem.prototype.animationComplete = function() {
-      console.log('animation complete');
       return this.animating = false;
     };
 
-    Gem.prototype.dropTo = function(y, delay, z) {
-      var drop_tween, length;
+    Gem.prototype.dropTo = function(y, delay, z, length) {
+      var drop_tween;
+      if (length == null) {
+        length = 1250;
+      }
       this.animating = true;
-      length = 1250;
       this.tween_data = {
         x: this.object.position.x,
         y: this.object.position.y,
@@ -415,14 +415,40 @@
       return Array.prototype.concat.apply([], this.cells);
     };
 
-    Grid.prototype.doomedGems = function() {
+    Grid.prototype.doomedCells = function() {
       var cell, j, len, ref, ref1, results;
       ref = this.flatCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
         if ((ref1 = cell.gem) != null ? ref1.doomed : void 0) {
-          results.push(cell.gem);
+          results.push(cell);
+        }
+      }
+      return results;
+    };
+
+    Grid.prototype.emptyCells = function() {
+      var cell, j, len, ref, results;
+      ref = this.flatCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        if (cell.gem === null) {
+          results.push(cell);
+        }
+      }
+      return results;
+    };
+
+    Grid.prototype.dirtyCells = function() {
+      var cell, j, len, ref, results;
+      ref = this.flatCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        if (cell.dirty) {
+          results.push(cell);
         }
       }
       return results;
@@ -441,12 +467,62 @@
     };
 
     Grid.prototype.clearDoomed = function() {
-      var gem, j, len, ref, results;
-      ref = this.doomedGems();
+      var cell, j, len, ref, results;
+      ref = this.doomedCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
-        gem = ref[j];
-        results.push(this.object.remove(gem.object));
+        cell = ref[j];
+        this.object.remove(cell.gem.object);
+        results.push(cell.gem = null);
+      }
+      return results;
+    };
+
+    Grid.prototype.checkDirty = function() {
+      var cell, j, len, ref, results;
+      ref = this.dirtyCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        results.push(cell.flagCleared());
+      }
+      return results;
+    };
+
+    Grid.prototype.fillHoles = function() {
+      var cell, j, len, ref, results;
+      ref = this.emptyCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        results.push(this.fillCell(cell));
+      }
+      return results;
+    };
+
+    Grid.prototype.fillCell = function(cell) {
+      var j, new_cell, ref, ref1, results, y;
+      cell.dirty = true;
+      results = [];
+      for (y = j = ref = cell.y + 1, ref1 = this.h; ref <= ref1 ? j <= ref1 : j >= ref1; y = ref <= ref1 ? ++j : --j) {
+        if (y === this.h) {
+          cell.gem = this.main.gem_factory.random();
+          cell.gem.setX(cell.xPos());
+          cell.gem.setY(this.h * 2);
+          this.object.add(cell.gem.object);
+          results.push(cell.gem.dropTo(cell.yPos(), 0, -cell.yPos(), 500));
+        } else {
+          new_cell = this.cells[cell.x][y];
+          if (new_cell.gem) {
+            cell.gem = new_cell.gem;
+            new_cell.gem = null;
+            cell.gem.dropTo(cell.yPos(), 0, -cell.yPos(), 500);
+            this.fillCell(new_cell);
+            break;
+          } else {
+            results.push(void 0);
+          }
+        }
       }
       return results;
     };
@@ -457,6 +533,10 @@
         return;
       }
       this.clearDoomed();
+      while (this.emptyCells().length > 0) {
+        this.fillHoles();
+      }
+      this.checkDirty();
       if (this.ready_for_input && this.main.input.touching) {
         this.selected = this.touchedCell(this.main.input.start);
         current = this.touchedCell(this.main.input.move);

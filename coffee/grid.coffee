@@ -17,8 +17,14 @@ class Grid
   flatCells: ->
     Array.prototype.concat.apply([],@cells)
 
-  doomedGems: ->
-    cell.gem for cell in @flatCells() when cell.gem?.doomed
+  doomedCells: ->
+    cell for cell in @flatCells() when cell.gem?.doomed
+
+  emptyCells: ->
+    cell for cell in @flatCells() when cell.gem is null
+
+  dirtyCells: ->
+    cell for cell in @flatCells() when cell.dirty
 
   animating: ->
     for cell in @flatCells()
@@ -26,11 +32,40 @@ class Grid
     false
 
   clearDoomed: ->
-    @object.remove( gem.object ) for gem in @doomedGems()
+    for cell in @doomedCells()
+      @object.remove( cell.gem.object ) 
+      cell.gem = null
+
+  checkDirty: ->
+    cell.flagCleared() for cell in @dirtyCells()
+
+  fillHoles: -> 
+    @fillCell(cell) for cell in @emptyCells()
+
+  fillCell: (cell) ->
+    cell.dirty = true
+    for y in [cell.y+1..@h]
+      if y is @h
+        cell.gem = @main.gem_factory.random()
+        cell.gem.setX( cell.xPos() )
+        cell.gem.setY( @h*2 )
+        @object.add( cell.gem.object )
+        cell.gem.dropTo cell.yPos(), 0, -cell.yPos(), 500
+      else
+        new_cell = @cells[cell.x][y]
+        if new_cell.gem
+          cell.gem = new_cell.gem
+          new_cell.gem = null
+          cell.gem.dropTo cell.yPos(), 0, -cell.yPos(), 500
+          @fillCell(new_cell)
+          break  
 
   update: (t) ->
     return if @animating()
     @clearDoomed()
+    @fillHoles() while @emptyCells().length > 0
+    @checkDirty()
+
     if @ready_for_input and @main.input.touching
       @selected = @touchedCell(@main.input.start)
       current = @touchedCell(@main.input.move)
