@@ -9,8 +9,8 @@ class Main
     @input = new Input()
     @logger.log 'init three'
     @initThree()
-    @drawBackground()
     @grid = new Grid(@grid_width, @grid_height,@)
+    @drawBackground()
     @scene.add( @grid.object )
     @gem_factory = new GemFactory()
     @gem_factory.onload = @gemsLoaded
@@ -29,7 +29,7 @@ class Main
     document.body.style.zoom = 1 / window.devicePixelRatio
     @scene = new THREE.Scene()
 
-    @camera = new THREE.OrthographicCamera( 0, @realWidth(), @realHeight(), 0, 0, 5000 )
+    @camera = new THREE.OrthographicCamera( 0, @realWidth(), @realHeight(), 0, 0, 200000 )
 
     @camera.position.z = 500
     @camera.updateProjectionMatrix()
@@ -54,7 +54,7 @@ class Main
     background = new THREE.Mesh( bgg, bg )
     background.position.x = @realWidth()/2
     background.position.y = @realHeight()/2
-    background.position.z = -1000
+    background.position.z = -100000
 
     @scene.add( background )
 

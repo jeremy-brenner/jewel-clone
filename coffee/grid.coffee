@@ -7,8 +7,8 @@ class Grid
     @cells = @buildCells()
     @object = new THREE.Object3D()
     @ready_for_input = true
-    @buildBoard()
-    
+    @board = @buildBoard()
+    @object.add(@board)
     @object.position.x = @boardScale(@margin)
     @object.position.y = @boardScale(@margin)
 
@@ -70,16 +70,20 @@ class Grid
   addGems: ->
     for row in @cells
       for cell in row
-        g = @main.gem_factory.random()
-        g.setX( cell.xPos() )
-        g.setY( @h*2 ) 
-        cell.gem = g
+        loop
+          cell.gem = @main.gem_factory.random()
+          break unless cell.willClear()
+        cell.gem.setX( cell.xPos() )
+        cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
-        g.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10
+        cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 
   buildBoard: ->
+    board = new THREE.Object3D()
+    board.position.z = -20*@h
     for cell in @flatCells()
-      @object.add( cell.square )
+      board.add( cell.square )
+    board
 
   buildCells: ->
     for x in [0...@h]

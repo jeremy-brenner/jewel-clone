@@ -10,7 +10,7 @@ class Gem
     @animating = false
     @object.add @mesh
     @object.add @outline
-    @swap_length = 750
+    @swap_length = 500
 
   setX: (x) ->
     @object.position.x = x
@@ -22,10 +22,10 @@ class Gem
     console.log 'animation complete'
     @animating = false
 
-  dropTo: (y,delay) ->
+  dropTo: (y,delay,z) ->
     @animating = true
     length = 1250
-    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: z }
     drop_tween = new TWEEN.Tween( @tween_data )
              .to( { y: y }, length ) 
              .easing( TWEEN.Easing.Bounce.Out )
@@ -34,7 +34,7 @@ class Gem
 
   doSwap: (x,y,real=true,front=true) ->
     @animating = true
-    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1 }
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 1 }
     if real
       @zoomTween(front).start()
       @realSwapTween(x,y).start()
@@ -44,13 +44,13 @@ class Gem
 
 
   zoomTween: (front=true) ->
-    sc = if front then 0.25 else -0.25
+    sc = if front then 1.5 else 0.5
     zoom_tween_start = new TWEEN.Tween( @tween_data )
-             .to( { s: 1+sc }, @swap_length/2 ) 
+             .to( { s: sc, z: sc }, @swap_length/2 ) 
              .easing( TWEEN.Easing.Circular.In )
              .onUpdate( @tweenTick )
     zoom_tween_end = new TWEEN.Tween( @tween_data )
-             .to( { s: 1 }, @swap_length/2 ) 
+             .to( { s: 1, z: 1 }, @swap_length/2 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
 
@@ -65,45 +65,45 @@ class Gem
 
   failedSwapTween: (x,y) ->
     swap_start = new TWEEN.Tween( @tween_data )
-             .to( { x: x, y: y }, @swap_length ) 
-             .easing( TWEEN.Easing.Circular.In )
+             .to( { x: x, y: y }, @swap_length/1.5 ) 
+             .easing( TWEEN.Easing.Back.In )
              .onUpdate( @tweenTick )
 
     swap_end = new TWEEN.Tween( @tween_data )
-             .to( { x: @object.position.x, y: @object.position.y }, @swap_length ) 
-             .easing( TWEEN.Easing.Circular.Out )
+             .to( { x: @object.position.x, y: @object.position.y }, @swap_length/1.5 ) 
+             .easing( TWEEN.Easing.Quadratic.InOut )
              .onUpdate( @tweenTick )
              .onComplete( @animationComplete )
     swap_start.chain swap_end
 
   failedZoomTween: (front=true) ->
-    sc = if front then 0.25 else -0.25
-    z = []
-    z[0] = new TWEEN.Tween( @tween_data )
-             .to( { s: 1+sc }, @swap_length/2 ) 
-             .easing( TWEEN.Easing.Circular.In )
-             .onUpdate( @tweenTick )
-    z[1] = new TWEEN.Tween( @tween_data )
-             .to( { s: 1 }, @swap_length/2 ) 
+    sc = if front then 1.5 else 0.5
+
+    a = new TWEEN.Tween( @tween_data )
+             .to( { s: sc, z: sc }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
-    z[2] = new TWEEN.Tween( @tween_data )
-             .to( { s: 1-sc }, @swap_length/2 ) 
+    b = new TWEEN.Tween( @tween_data )
+             .to( { s: 1, z: 1 }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.In )
              .onUpdate( @tweenTick )
-    z[3] = new TWEEN.Tween( @tween_data )
-             .to( { s: 1 }, @swap_length/2 ) 
+    c = new TWEEN.Tween( @tween_data )
+             .to( { s: 2-sc, z: 2-sc }, @swap_length/3 ) 
+             .easing( TWEEN.Easing.Circular.In )
+             .onUpdate( @tweenTick )
+    d = new TWEEN.Tween( @tween_data )
+             .to( { s: 1, z: 1 }, @swap_length/3 ) 
              .easing( TWEEN.Easing.Circular.Out )
              .onUpdate( @tweenTick )
-    z[0].chain z[1]
-    z[1].chain z[2]
-    z[2].chain z[3]
-    z[0]
+    
+    c.chain d
+    b.chain c
+    a.chain b
 
   tweenTick: =>
     @object.position.x = @tween_data.x
     @object.position.y = @tween_data.y
-    @object.position.z = @tween_data.s
+    @object.position.z = @tween_data.z
     @object.scale.x = @tween_data.s
     @object.scale.y = @tween_data.s
 

@@ -63,7 +63,7 @@ class Cell
 
     return [] unless cell
 
-    if cell.matchGem().def_id == def_id
+    if cell.matchGem()?.def_id == def_id
       [cell.matchGem()].concat cell.match(def_id,dir)
     else 
       []
