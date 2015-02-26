@@ -5,7 +5,6 @@ class Gem
     @object = new THREE.Object3D()
     @mesh = new THREE.Mesh( def.geometry, def.material )
     @outline = new THREE.Mesh( def.geometry, def.outline )
-    @mesh.position.z = 2
     @outline.scale.multiplyScalar(1.125)
     @animating = false
     @object.add @mesh
@@ -42,7 +41,7 @@ class Gem
       @failedSwapTween(x,y).start()
 
   swapStart: ->
-    game_audio.play('woosh')
+    GEMGAME.audio.play('woosh')
 
   zoomTween: (front=true) ->
     sc = if front then 1.5 else 0.5

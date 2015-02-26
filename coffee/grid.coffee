@@ -1,9 +1,8 @@
 class Grid
-  constructor: (w,h,main) ->
+  constructor: (w,h) ->
     @w = w
     @h = h
-    @main = main
-    @margin = 0.25
+    @margin = 0
     @cells = @buildCells()
     @object = new THREE.Object3D()
     @ready_for_input = true
@@ -46,7 +45,7 @@ class Grid
     cell.dirty = true
     for y in [cell.y+1..@h]
       if y is @h
-        cell.gem = @main.gem_factory.random()
+        cell.gem = GEMGAME.gem_factory.random()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
@@ -67,11 +66,11 @@ class Grid
     if @dirtyCells().length > 0 
       @checkDirty()
     else
-      @main.score.chain = 0
+      GEMGAME.score.chain = 0
 
-    if @ready_for_input and @main.input.touching
-      @selected = @touchedCell(@main.input.start)
-      current = @touchedCell(@main.input.move)
+    if @ready_for_input and GEMGAME.input.touching
+      @selected = @touchedCell(GEMGAME.input.start)
+      current = @touchedCell(GEMGAME.input.move)
       return @stopInput() unless @validMove( @selected, current )
 
       if @selected is current
@@ -80,7 +79,7 @@ class Grid
         @stopInput()
         @selected.swapGems current
   
-    if not @main.input.touching and not @animating()
+    if not GEMGAME.input.touching and not @animating()
       if @selected
         @selected.reset()
         @selected = null
@@ -93,9 +92,8 @@ class Grid
     @ready_for_input = false
     @selected?.reset()  
 
-
   topOffset: ->
-    @main.realHeight() - @boardScale(@h+@margin)
+    GEMGAME.screen.realHeight() - @boardScale(@h+@margin)
 
   touchedCell: (pos) ->
     x = Math.floor pos.x/@boardScale()-@margin
@@ -103,13 +101,13 @@ class Grid
     @cells[x]?[y]
 
   boardScale: (i=1)->
-    @main.realWidth() / (@w+@margin*2) * i
+    GEMGAME.screen.realWidth() / (@w+@margin*2) * i
 
   addGems: ->
     for row in @cells
       for cell in row
         loop
-          cell.gem = @main.gem_factory.random()
+          cell.gem = GEMGAME.gem_factory.random()
           break unless cell.willClear()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
@@ -126,4 +124,4 @@ class Grid
   buildCells: ->
     for x in [0...@h]
       for y in [0...@w]
-        new Cell(x,y,@main)
+        new Cell(x,y)

@@ -1,8 +1,7 @@
 class Cell
-  constructor: (x,y,main) ->
+  constructor: (x,y) ->
     @x = x
     @y = y
-    @main = main
     @buildSquare()
 
   xPos: ->
@@ -17,10 +16,10 @@ class Cell
 
   flagCleared: ->
     if @horizontalMatches().length >= 3
-      @main.score.add @horizontalMatches().length
+      GEMGAME.score.add @horizontalMatches().length
       m.doomed = true for m in @horizontalMatches()
     if @verticalMatches().length >= 3
-      @main.score.add @verticalMatches().length
+      GEMGAME.score.add @verticalMatches().length
       m.doomed = true for m in @verticalMatches()
     @dirty = false
 
@@ -56,13 +55,13 @@ class Cell
   match: (def_id,dir) ->
     cell = switch dir
       when 'left'
-        @main.grid.cells[@x-1]?[@y]
+        GEMGAME.main.grid.cells[@x-1]?[@y]
       when 'right'
-        @main.grid.cells[@x+1]?[@y]
+        GEMGAME.main.grid.cells[@x+1]?[@y]
       when 'up'
-        @main.grid.cells[@x]?[@y+1]
+        GEMGAME.main.grid.cells[@x]?[@y+1]
       when 'down'
-        @main.grid.cells[@x]?[@y-1]
+        GEMGAME.main.grid.cells[@x]?[@y-1]
 
     return [] unless cell
 

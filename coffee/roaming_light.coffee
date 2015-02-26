@@ -1,7 +1,6 @@
 class RoamingLight 
-  constructor: (scale,input) ->
+  constructor: (scale) ->
     @scale = scale
-    @input = input
     @object = new THREE.DirectionalLight( 0xffffff, 1 )
     @object.position.z = scale/2
     @speed = 2500
@@ -13,10 +12,10 @@ class RoamingLight
     Math.cos(t/(@speed*2)) * @scale
 
   xOffset: ->
-    @input.orientation.gamma * (Math.PI/180) * -1 * @scale
+    GEMGAME.input.orientation.gamma * (Math.PI/180) * -1 * @scale
 
   yOffset: ->
-    @input.orientation.beta * (Math.PI/180) * @scale
+    GEMGAME.input.orientation.beta * (Math.PI/180) * @scale
 
   update: (t) ->
     @object.position.x = @xPos(t)+@xOffset()

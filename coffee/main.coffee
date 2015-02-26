@@ -6,40 +6,28 @@ class Main
     @logger = new Logger(false)
     @logger.log "logger started"
     @fps = new Fps()
-    @input = new Input()
-    @roaming_light = new RoamingLight( @realWidth(), @input)
-    window.game_audio = new AudioManager(['sounds/woosh.mp3'])
+    @roaming_light = new RoamingLight(GEMGAME.screen.realWidth())
     @logger.log 'init three'
     @initThree()
-    @score = new Score()
     @grid = new Grid(@grid_width, @grid_height,@)
     @drawBackground()
     @scene.add( @grid.object )
-    @gem_factory = new GemFactory()
-    @gem_factory.onload = @gemsLoaded
+    
+    GEMGAME.gem_factory.onload = @gemsLoaded
     @renderLoop(0)
-
-  realWidth: ->
-    window.innerWidth * window.devicePixelRatio
-
-  realHeight: ->
-    window.innerHeight * window.devicePixelRatio
-
-  aspect: ->
-    window.innerWidth / window.innerHeight
 
   initThree: ->
     document.body.style.zoom = 1 / window.devicePixelRatio
     @scene = new THREE.Scene()
 
-    @camera = new THREE.OrthographicCamera( 0, @realWidth(), @realHeight(), 0, 0, 200000 )
+    @camera = new THREE.OrthographicCamera( 0, GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight(), 0, 0, 200000 )
 
     @camera.position.z = 500
     @camera.updateProjectionMatrix()
     @renderer = new THREE.WebGLRenderer
       antialias: true
 
-    @renderer.setSize @realWidth(), @realHeight()
+    @renderer.setSize GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight()
     document.body.appendChild @renderer.domElement 
 
     @scene.add( new THREE.AmbientLight( 0x666666 ) )
@@ -50,10 +38,10 @@ class Main
     bg = new THREE.MeshLambertMaterial
       map: THREE.ImageUtils.loadTexture( 'img/wallpaper.png' ) 
     
-    bgg = new THREE.PlaneBufferGeometry @realHeight(), @realHeight() 
+    bgg = new THREE.PlaneBufferGeometry GEMGAME.screen.realHeight(), GEMGAME.screen.realHeight() 
     background = new THREE.Mesh( bgg, bg )
-    background.position.x = @realWidth()/2
-    background.position.y = @realHeight()/2
+    background.position.x = GEMGAME.screen.realWidth()/2
+    background.position.y = GEMGAME.screen.realHeight()/2
     background.position.z = -100000
 
     @scene.add( background )
