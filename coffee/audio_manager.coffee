@@ -42,12 +42,12 @@ class AudioManager
   play: (name) ->
     return unless @buffers[name]
     source = @context.createBufferSource()
-    source.noteOnAt = Date.now()
+    #source.noteOnAt = Date.now()
     channel = @nodes.effectsGain
     source.buffer = @buffers[name]
     source.connect channel 
     source.loop = false
-    source.start( 0 )
+    source.start( start )
 
   onload: ->
     #noop

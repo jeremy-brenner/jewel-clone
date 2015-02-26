@@ -106,18 +106,20 @@
       }
     };
 
-    AudioManager.prototype.play = function(name) {
+    AudioManager.prototype.play = function(name, start) {
       var channel, source;
+      if (start == null) {
+        start = 0;
+      }
       if (!this.buffers[name]) {
         return;
       }
       source = this.context.createBufferSource();
-      source.noteOnAt = Date.now();
       channel = this.nodes.effectsGain;
       source.buffer = this.buffers[name];
       source.connect(channel);
       source.loop = false;
-      return source.start(0);
+      return source.start(start);
     };
 
     AudioManager.prototype.onload = function() {};
@@ -594,12 +596,15 @@
     };
 
     Grid.prototype.clearDoomed = function() {
-      var cell, j, len, ref, results;
+      var cell, cleared, j, len, ref, results;
+      cleared = 0;
       ref = this.doomedCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
+        cleared += 1;
         this.object.remove(cell.gem.object);
+        GEMGAME.audio.play('pop', cleared);
         results.push(cell.gem = null);
       }
       return results;
@@ -787,7 +792,7 @@
     GEMGAME.screen = new Screen();
     GEMGAME.score = new Score();
     GEMGAME.gem_factory = new GemFactory();
-    GEMGAME.audio = new AudioManager(['sounds/woosh.mp3']);
+    GEMGAME.audio = new AudioManager(['sounds/woosh.mp3', 'sounds/pop.mp3']);
     return GEMGAME.main = new Main();
   });
 

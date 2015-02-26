@@ -33,6 +33,7 @@ class Grid
   clearDoomed: ->
     for cell in @doomedCells()
       @object.remove( cell.gem.object ) 
+      GEMGAME.audio.play('pop')
       cell.gem = null
 
   checkDirty: ->
