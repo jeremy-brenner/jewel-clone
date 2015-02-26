@@ -17,11 +17,11 @@ class AudioLoader
     @request.send()
 
   fileLoaded: =>
-    @loaded = true
     @context.decodeAudioData @request.response, @loadBuffer
 
   loadBuffer: (buffer) =>
     @buffer = buffer
+    @loaded = true
     @onload()
   
   onload: ->

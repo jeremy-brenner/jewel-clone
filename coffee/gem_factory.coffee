@@ -17,20 +17,22 @@ class GemFactory
 
   gemsLoaded: =>
     json = JSON.parse @req.responseText
-    @defs = for gem,i in json
+    chunk = @buildGeometry(json.chunk.geometry,@scalefactor/2)
+    @defs = for gem,i in json.gems
       {
         id: i
-        geometry: @buildGeometry(gem.geometry)
+        geometry: @buildGeometry(gem.geometry,@scalefactor)
         material: @buildMaterial(gem.color)
         outline: @outline
+        chunk: chunk
       }
     @loaded = true
     @onload()
 
-  buildGeometry: (def) ->
+  buildGeometry: (def,scale) ->
     geom = @jsonloader.parse( def ).geometry
     rx = new THREE.Matrix4().makeRotationX( Math.PI/2 )
-    s = new THREE.Matrix4().makeScale @scalefactor, @scalefactor, @scalefactor
+    s = new THREE.Matrix4().makeScale scale,scale,scale
     r = new THREE.Matrix4().multiplyMatrices rx, s
     geom.applyMatrix r
     new THREE.BufferGeometry().fromGeometry geom

@@ -1,11 +1,17 @@
 class Gem
   constructor: (def,id) ->
     @id = id
+    @def = def
     @def_id = def.id
     @object = new THREE.Object3D()
     @mesh = new THREE.Mesh( def.geometry, def.material )
     @outline = new THREE.Mesh( def.geometry, def.outline )
+    @chunks = for x in [0..1]
+      for y in [0..1]
+        @buildChunk x,y
+
     @outline.scale.multiplyScalar(1.125)
+
     @animating = false
     @object.add @mesh
     @object.add @outline
@@ -16,7 +22,55 @@ class Gem
 
   setY: (y) ->
     @object.position.y = y
- 
+
+  buildChunk: (x,y) ->
+    object = new THREE.Object3D()
+    mesh = new THREE.Mesh( @def.chunk, @def.material )
+    outline = new THREE.Mesh( @def.chunk, @def.outline )
+    outline.scale.multiplyScalar(1.125)
+    object.add mesh
+    object.add outline
+    object.rotation.set Math.PI*2*Math.random(), Math.PI*2*Math.random(), Math.PI*2*Math.random()
+    object.position.z = 1
+    object.position.x = (x-0.5)*0.125
+    object.position.y = (y-0.5)*0.125
+    object 
+
+  explode: ->
+    @object.remove @mesh
+    @object.remove @outline
+    for row,x in @chunks
+      for chunk,y in row
+        @object.add chunk
+        @hurlChunk(x,y)
+
+  hurlChunk: (cx,cy) ->
+    td = { x: @chunks[cx][cy].position.x, y: @chunks[cx][cy].position.y, s: 1, o: @chunks[cx][cy] }
+    xdir = Math.abs(td.x)/td.x
+    ydir = Math.abs(td.y)/td.y
+    xdest = GEMGAME.main.grid_width * xdir * (Math.random()*10+1)
+    ydest = GEMGAME.main.grid_height * ydir * (Math.random()*10+1)
+    @hurl_tweens ?= []
+    @hurl_tweens.push td
+    hurl_tween = new TWEEN.Tween( td )
+      .to( { x: xdest, y: ydest }, 4000 ) 
+       .easing( TWEEN.Easing.Linear.None )
+       .onUpdate( @hurlTweenTick )
+       .onComplete( @hurlTweenComplete )
+    hurl_tween.start()
+
+    #drop_tween.onComplete( @animationComplete ).start()
+  hurlTweenTick: =>
+    for tween in @hurl_tweens
+      tween.o.rotation.x += tween.x-tween.o.position.x
+      tween.o.rotation.y += tween.y-tween.o.position.y
+      tween.o.position.x = tween.x
+      tween.o.position.y = tween.y
+     
+  hurlTweenComplete: =>
+    for tween in @hurl_tweens
+      @object.remove tween.o
+
   animationComplete: =>
     @object.position.z = 0
     @animating = false

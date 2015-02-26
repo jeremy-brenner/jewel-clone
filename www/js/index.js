@@ -26,12 +26,12 @@
     };
 
     AudioLoader.prototype.fileLoaded = function() {
-      this.loaded = true;
       return this.context.decodeAudioData(this.request.response, this.loadBuffer);
     };
 
     AudioLoader.prototype.loadBuffer = function(buffer) {
       this.buffer = buffer;
+      this.loaded = true;
       return this.onload();
     };
 
@@ -45,10 +45,10 @@
     function AudioManager(files) {
       this.fileLoaded = bind(this.fileLoaded, this);
       this.context = new AudioContext();
-      this.audio_loaders = this.loadFiles(files);
       this.buffers = {};
       this.buildNodes();
       this.buildGraph();
+      this.audio_loaders = this.loadFiles(files);
     }
 
     AudioManager.prototype.buildNodes = function() {
@@ -106,20 +106,16 @@
       }
     };
 
-    AudioManager.prototype.play = function(name, start) {
-      var channel, source;
-      if (start == null) {
-        start = 0;
-      }
+    AudioManager.prototype.play = function(name) {
+      var source;
       if (!this.buffers[name]) {
         return;
       }
       source = this.context.createBufferSource();
-      channel = this.nodes.effectsGain;
       source.buffer = this.buffers[name];
-      source.connect(channel);
+      source.connect(this.nodes.effectsGain);
       source.loop = false;
-      return source.start(start);
+      return source.start();
     };
 
     AudioManager.prototype.onload = function() {};
@@ -293,11 +289,30 @@
     function Gem(def, id) {
       this.tweenTick = bind(this.tweenTick, this);
       this.animationComplete = bind(this.animationComplete, this);
+      this.hurlTweenComplete = bind(this.hurlTweenComplete, this);
+      this.hurlTweenTick = bind(this.hurlTweenTick, this);
+      var x, y;
       this.id = id;
+      this.def = def;
       this.def_id = def.id;
       this.object = new THREE.Object3D();
       this.mesh = new THREE.Mesh(def.geometry, def.material);
       this.outline = new THREE.Mesh(def.geometry, def.outline);
+      this.chunks = (function() {
+        var j, results;
+        results = [];
+        for (x = j = 0; j <= 1; x = ++j) {
+          results.push((function() {
+            var k, results1;
+            results1 = [];
+            for (y = k = 0; k <= 1; y = ++k) {
+              results1.push(this.buildChunk(x, y));
+            }
+            return results1;
+          }).call(this));
+        }
+        return results;
+      }).call(this);
       this.outline.scale.multiplyScalar(1.125);
       this.animating = false;
       this.object.add(this.mesh);
@@ -311,6 +326,91 @@
 
     Gem.prototype.setY = function(y) {
       return this.object.position.y = y;
+    };
+
+    Gem.prototype.buildChunk = function(x, y) {
+      var mesh, object, outline;
+      object = new THREE.Object3D();
+      mesh = new THREE.Mesh(this.def.chunk, this.def.material);
+      outline = new THREE.Mesh(this.def.chunk, this.def.outline);
+      outline.scale.multiplyScalar(1.125);
+      object.add(mesh);
+      object.add(outline);
+      object.rotation.set(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
+      object.position.z = 1;
+      object.position.x = (x - 0.5) * 0.125;
+      object.position.y = (y - 0.5) * 0.125;
+      return object;
+    };
+
+    Gem.prototype.explode = function() {
+      var chunk, j, len, ref, results, row, x, y;
+      this.object.remove(this.mesh);
+      this.object.remove(this.outline);
+      ref = this.chunks;
+      results = [];
+      for (x = j = 0, len = ref.length; j < len; x = ++j) {
+        row = ref[x];
+        results.push((function() {
+          var k, len1, results1;
+          results1 = [];
+          for (y = k = 0, len1 = row.length; k < len1; y = ++k) {
+            chunk = row[y];
+            this.object.add(chunk);
+            results1.push(this.hurlChunk(x, y));
+          }
+          return results1;
+        }).call(this));
+      }
+      return results;
+    };
+
+    Gem.prototype.hurlChunk = function(cx, cy) {
+      var hurl_tween, td, xdest, xdir, ydest, ydir;
+      td = {
+        x: this.chunks[cx][cy].position.x,
+        y: this.chunks[cx][cy].position.y,
+        s: 1,
+        o: this.chunks[cx][cy]
+      };
+      xdir = Math.abs(td.x) / td.x;
+      ydir = Math.abs(td.y) / td.y;
+      xdest = GEMGAME.main.grid_width * xdir * (Math.random() * 10 + 1);
+      ydest = GEMGAME.main.grid_height * ydir * (Math.random() * 10 + 1);
+      if (this.hurl_tweens == null) {
+        this.hurl_tweens = [];
+      }
+      this.hurl_tweens.push(td);
+      hurl_tween = new TWEEN.Tween(td).to({
+        x: xdest,
+        y: ydest
+      }, 5000).easing(TWEEN.Easing.Linear.None).onUpdate(this.hurlTweenTick).onComplete(this.hurlTweenComplete);
+      return hurl_tween.start();
+    };
+
+    Gem.prototype.hurlTweenTick = function() {
+      var j, len, ref, results, tween;
+      ref = this.hurl_tweens;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        tween = ref[j];
+        tween.o.rotation.x += tween.x - tween.o.position.x;
+        tween.o.rotation.y += tween.y - tween.o.position.y;
+        tween.o.position.x = tween.x;
+        results.push(tween.o.position.y = tween.y);
+      }
+      return results;
+    };
+
+    Gem.prototype.hurlTweenComplete = function() {
+      var j, len, ref, results, tween;
+      ref = this.hurl_tweens;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        tween = ref[j];
+        results.push(this.object.remove(tween.o));
+      }
+      return results;
     };
 
     Gem.prototype.animationComplete = function() {
@@ -473,18 +573,21 @@
     };
 
     GemFactory.prototype.gemsLoaded = function() {
-      var gem, i, json;
+      var chunk, gem, i, json;
       json = JSON.parse(this.req.responseText);
+      chunk = this.buildGeometry(json.chunk.geometry, this.scalefactor / 2);
       this.defs = (function() {
-        var j, len, results;
+        var j, len, ref, results;
+        ref = json.gems;
         results = [];
-        for (i = j = 0, len = json.length; j < len; i = ++j) {
-          gem = json[i];
+        for (i = j = 0, len = ref.length; j < len; i = ++j) {
+          gem = ref[i];
           results.push({
             id: i,
-            geometry: this.buildGeometry(gem.geometry),
+            geometry: this.buildGeometry(gem.geometry, this.scalefactor),
             material: this.buildMaterial(gem.color),
-            outline: this.outline
+            outline: this.outline,
+            chunk: chunk
           });
         }
         return results;
@@ -493,11 +596,11 @@
       return this.onload();
     };
 
-    GemFactory.prototype.buildGeometry = function(def) {
+    GemFactory.prototype.buildGeometry = function(def, scale) {
       var geom, r, rx, s;
       geom = this.jsonloader.parse(def).geometry;
       rx = new THREE.Matrix4().makeRotationX(Math.PI / 2);
-      s = new THREE.Matrix4().makeScale(this.scalefactor, this.scalefactor, this.scalefactor);
+      s = new THREE.Matrix4().makeScale(scale, scale, scale);
       r = new THREE.Matrix4().multiplyMatrices(rx, s);
       geom.applyMatrix(r);
       return new THREE.BufferGeometry().fromGeometry(geom);
@@ -596,15 +699,13 @@
     };
 
     Grid.prototype.clearDoomed = function() {
-      var cell, cleared, j, len, ref, results;
-      cleared = 0;
+      var cell, j, len, ref, results;
       ref = this.doomedCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
-        cleared += 1;
-        this.object.remove(cell.gem.object);
-        GEMGAME.audio.play('pop', cleared);
+        cell.gem.explode();
+        GEMGAME.audio.play('pop');
         results.push(cell.gem = null);
       }
       return results;

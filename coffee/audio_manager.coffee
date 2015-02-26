@@ -1,10 +1,10 @@
 class AudioManager
   constructor: (files) ->
     @context = new AudioContext()
-    @audio_loaders = @loadFiles(files)
     @buffers = {}
     @buildNodes()
     @buildGraph()
+    @audio_loaders = @loadFiles(files)
 
   buildNodes: ->
     @nodes = 
@@ -23,7 +23,9 @@ class AudioManager
     @nodes.pausedEffectsGain.connect @nodes.coreEffectsGain 
 
   loadFiles: (files) ->
+    #console.log 'loadfiles', files
     for file in files
+      #console.log 'loading', file
       af = new AudioLoader(file) 
       af.onload = @fileLoaded
       af
@@ -42,12 +44,10 @@ class AudioManager
   play: (name) ->
     return unless @buffers[name]
     source = @context.createBufferSource()
-    #source.noteOnAt = Date.now()
-    channel = @nodes.effectsGain
     source.buffer = @buffers[name]
-    source.connect channel 
+    source.connect @nodes.effectsGain 
     source.loop = false
-    source.start( start )
+    source.start()
 
   onload: ->
     #noop

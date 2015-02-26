@@ -32,7 +32,8 @@ class Grid
 
   clearDoomed: ->
     for cell in @doomedCells()
-      @object.remove( cell.gem.object ) 
+      #@object.remove( cell.gem.object ) 
+      cell.gem.explode()
       GEMGAME.audio.play('pop')
       cell.gem = null
 
