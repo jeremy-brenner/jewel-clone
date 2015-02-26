@@ -53,7 +53,7 @@ class Main
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     TWEEN.update t
-
+    GEMGAME.score.update t
     @roaming_light.update t
     @grid.update t
     @renderer.render( @scene, @camera )

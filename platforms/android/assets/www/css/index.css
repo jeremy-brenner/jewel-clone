@@ -53,6 +53,11 @@ canvas {
   display: inline-block;
 }
 
+#score {
+  top: 0px;
+  left: 0px;
+}
+
 #fps {
   top: 0px;
   left: 0px;

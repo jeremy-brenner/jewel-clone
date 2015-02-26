@@ -4,6 +4,8 @@ class Score
     @cleared = 0
     @chain = 0
     @longest_chain = 0
+    @last_updated = 0
+    @update_interval = 1000
 
   worth: (cleared) ->
     (cleared-2) * cleared * (@chain+1)
@@ -13,6 +15,21 @@ class Score
     @longest_chain = if @chain > @longest_chain then @chain else @longest_chain
 
   add: (cleared) ->
-    @score += @worth()
+    @score += @worth(cleared)
     @cleared += cleared
     @updateChain()
+
+  timeToUpdate: (t) ->
+    t-@last_updated > @update_interval
+
+  scoreText: ->
+    """
+      Cleared: #{@cleared}
+      Chain: #{@chain}
+      Longest Chain: #{@longest_chain}
+      Score: #{@score}
+    """
+
+  update: (t) ->
+    return unless @timeToUpdate(t)
+    document.getElementById('score').innerText = @scoreText()

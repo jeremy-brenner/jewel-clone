@@ -1029,6 +1029,7 @@
     Main.prototype.renderLoop = function(t) {
       requestAnimationFrame(this.renderLoop);
       TWEEN.update(t);
+      GEMGAME.score.update(t);
       this.roaming_light.update(t);
       this.grid.update(t);
       this.renderer.render(this.scene, this.camera);
@@ -1078,6 +1079,8 @@
       this.cleared = 0;
       this.chain = 0;
       this.longest_chain = 0;
+      this.last_updated = 0;
+      this.update_interval = 1000;
     }
 
     Score.prototype.worth = function(cleared) {
@@ -1090,9 +1093,24 @@
     };
 
     Score.prototype.add = function(cleared) {
-      this.score += this.worth();
+      this.score += this.worth(cleared);
       this.cleared += cleared;
       return this.updateChain();
+    };
+
+    Score.prototype.timeToUpdate = function(t) {
+      return t - this.last_updated > this.update_interval;
+    };
+
+    Score.prototype.scoreText = function() {
+      return "Cleared: " + this.cleared + "\nChain: " + this.chain + "\nLongest Chain: " + this.longest_chain + "\nScore: " + this.score;
+    };
+
+    Score.prototype.update = function(t) {
+      if (!this.timeToUpdate(t)) {
+        return;
+      }
+      return document.getElementById('score').innerText = this.scoreText();
     };
 
     return Score;
