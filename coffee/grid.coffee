@@ -3,13 +3,14 @@ class Grid
     @w = w
     @h = h
     @margin = 0
+    @footer = 1
     @cells = @buildCells()
     @object = new THREE.Object3D()
     @ready_for_input = true
     @board = @buildBoard()
     @object.add(@board)
     @object.position.x = @boardScale(@margin)
-    @object.position.y = @boardScale(@margin)
+    @object.position.y = @boardScale(@margin+@footer)
 
     @object.scale.multiplyScalar @boardScale()
 
@@ -32,7 +33,6 @@ class Grid
 
   clearDoomed: ->
     for cell in @doomedCells()
-      #@object.remove( cell.gem.object ) 
       cell.gem.explode()
       GEMGAME.audio.play('pop')
       cell.gem = null
@@ -95,7 +95,7 @@ class Grid
     @selected?.reset()  
 
   topOffset: ->
-    GEMGAME.screen.realHeight() - @boardScale(@h+@margin)
+    GEMGAME.screen.realHeight() - @boardScale(@h+@margin+@footer)
 
   touchedCell: (pos) ->
     x = Math.floor pos.x/@boardScale()-@margin

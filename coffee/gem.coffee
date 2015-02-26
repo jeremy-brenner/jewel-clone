@@ -46,30 +46,32 @@ class Gem
 
   hurlChunk: (cx,cy) ->
     td = { x: @chunks[cx][cy].position.x, y: @chunks[cx][cy].position.y, s: 1, o: @chunks[cx][cy] }
-    xdir = Math.abs(td.x)/td.x
-    ydir = Math.abs(td.y)/td.y
-    xdest = GEMGAME.main.grid_width * xdir * (Math.random()*10+1)
-    ydest = GEMGAME.main.grid_height * ydir * (Math.random()*10+1)
+    ra = Math.PI*2*Math.random()
+    rx = Math.sin(ra) * GEMGAME.main.grid_height*2
+    ry = Math.cos(ra) * GEMGAME.main.grid_height*2
+
+
     @hurl_tweens ?= []
     @hurl_tweens.push td
     hurl_tween = new TWEEN.Tween( td )
-      .to( { x: xdest, y: ydest }, 4000 ) 
+      .to( { x: rx, y: ry, s: 5 }, 2000 ) 
        .easing( TWEEN.Easing.Linear.None )
        .onUpdate( @hurlTweenTick )
        .onComplete( @hurlTweenComplete )
     hurl_tween.start()
 
-    #drop_tween.onComplete( @animationComplete ).start()
   hurlTweenTick: =>
     for tween in @hurl_tweens
       tween.o.rotation.x += tween.x-tween.o.position.x
       tween.o.rotation.y += tween.y-tween.o.position.y
       tween.o.position.x = tween.x
       tween.o.position.y = tween.y
-     
+      tween.o.scale.x = tween.s
+      tween.o.scale.y = tween.s
+      tween.o.scale.z = tween.s
+
   hurlTweenComplete: =>
-    for tween in @hurl_tweens
-      @object.remove tween.o
+    GEMGAME.main.grid.object.remove( @object )
 
   animationComplete: =>
     @object.position.z = 0

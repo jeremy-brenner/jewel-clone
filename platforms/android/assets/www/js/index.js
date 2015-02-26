@@ -366,25 +366,25 @@
     };
 
     Gem.prototype.hurlChunk = function(cx, cy) {
-      var hurl_tween, td, xdest, xdir, ydest, ydir;
+      var hurl_tween, ra, rx, ry, td;
       td = {
         x: this.chunks[cx][cy].position.x,
         y: this.chunks[cx][cy].position.y,
         s: 1,
         o: this.chunks[cx][cy]
       };
-      xdir = Math.abs(td.x) / td.x;
-      ydir = Math.abs(td.y) / td.y;
-      xdest = GEMGAME.main.grid_width * xdir * (Math.random() * 10 + 1);
-      ydest = GEMGAME.main.grid_height * ydir * (Math.random() * 10 + 1);
+      ra = Math.PI * 2 * Math.random();
+      rx = Math.sin(ra) * GEMGAME.main.grid_height * 2;
+      ry = Math.cos(ra) * GEMGAME.main.grid_height * 2;
       if (this.hurl_tweens == null) {
         this.hurl_tweens = [];
       }
       this.hurl_tweens.push(td);
       hurl_tween = new TWEEN.Tween(td).to({
-        x: xdest,
-        y: ydest
-      }, 5000).easing(TWEEN.Easing.Linear.None).onUpdate(this.hurlTweenTick).onComplete(this.hurlTweenComplete);
+        x: rx,
+        y: ry,
+        s: 5
+      }, 2000).easing(TWEEN.Easing.Linear.None).onUpdate(this.hurlTweenTick).onComplete(this.hurlTweenComplete);
       return hurl_tween.start();
     };
 
@@ -397,20 +397,16 @@
         tween.o.rotation.x += tween.x - tween.o.position.x;
         tween.o.rotation.y += tween.y - tween.o.position.y;
         tween.o.position.x = tween.x;
-        results.push(tween.o.position.y = tween.y);
+        tween.o.position.y = tween.y;
+        tween.o.scale.x = tween.s;
+        tween.o.scale.y = tween.s;
+        results.push(tween.o.scale.z = tween.s);
       }
       return results;
     };
 
     Gem.prototype.hurlTweenComplete = function() {
-      var j, len, ref, results, tween;
-      ref = this.hurl_tweens;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        tween = ref[j];
-        results.push(this.object.remove(tween.o));
-      }
-      return results;
+      return GEMGAME.main.grid.object.remove(this.object);
     };
 
     Gem.prototype.animationComplete = function() {
@@ -633,13 +629,14 @@
       this.w = w;
       this.h = h;
       this.margin = 0;
+      this.footer = 1;
       this.cells = this.buildCells();
       this.object = new THREE.Object3D();
       this.ready_for_input = true;
       this.board = this.buildBoard();
       this.object.add(this.board);
       this.object.position.x = this.boardScale(this.margin);
-      this.object.position.y = this.boardScale(this.margin);
+      this.object.position.y = this.boardScale(this.margin + this.footer);
       this.object.scale.multiplyScalar(this.boardScale());
     }
 
@@ -809,7 +806,7 @@
     };
 
     Grid.prototype.topOffset = function() {
-      return GEMGAME.screen.realHeight() - this.boardScale(this.h + this.margin);
+      return GEMGAME.screen.realHeight() - this.boardScale(this.h + this.margin + this.footer);
     };
 
     Grid.prototype.touchedCell = function(pos) {
