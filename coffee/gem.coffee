@@ -31,33 +31,44 @@ class Gem
     object.add mesh
     object.add outline
     object.rotation.set Math.PI*2*Math.random(), Math.PI*2*Math.random(), Math.PI*2*Math.random()
-    object.position.z = 1
+    object.position.z = -1
     object.position.x = (x-0.5)*0.125
     object.position.y = (y-0.5)*0.125
     object 
 
-  explode: ->
-    @object.remove @mesh
-    @object.remove @outline
+  explode: (delay=0) ->
     for row,x in @chunks
       for chunk,y in row
         @object.add chunk
-        @hurlChunk(x,y)
+        @hurlChunk(x,y,delay)
 
-  hurlChunk: (cx,cy) ->
+  removeGem: ->
+    @object.remove @mesh
+    @object.remove @outline    
+
+  hurlStart: =>
+    @removeGem()
+    for row,x in @chunks
+      for chunk,y in row
+        chunk.position.z = 1
+    GEMGAME.audio.play('pop')
+
+  hurlChunk: (cx,cy,delay) ->
     td = { x: @chunks[cx][cy].position.x, y: @chunks[cx][cy].position.y, s: 1, o: @chunks[cx][cy] }
     ra = Math.PI*2*Math.random()
-    rx = Math.sin(ra) * GEMGAME.main.grid_height*2
-    ry = Math.cos(ra) * GEMGAME.main.grid_height*2
+    rx = Math.sin(ra) * GEMGAME.main.grid_height*(1+Math.random())
+    ry = Math.cos(ra) * GEMGAME.main.grid_height*(1+Math.random())
 
 
     @hurl_tweens ?= []
     @hurl_tweens.push td
     hurl_tween = new TWEEN.Tween( td )
-      .to( { x: rx, y: ry, s: 5 }, 2000 ) 
+      .to( { x: rx, y: ry, s: 6 }, 2000 ) 
        .easing( TWEEN.Easing.Linear.None )
+       .onStart( @hurlStart )
        .onUpdate( @hurlTweenTick )
        .onComplete( @hurlTweenComplete )
+       .delay(delay)
     hurl_tween.start()
 
   hurlTweenTick: =>

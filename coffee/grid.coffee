@@ -11,14 +11,14 @@ class Grid
     @object.add(@board)
     @object.position.x = @boardScale(@margin)
     @object.position.y = @boardScale(@margin+@footer)
-
+    #GEMGAME.screen.realHeight()/2 - @boardScale(@h)/2
     @object.scale.multiplyScalar @boardScale()
 
   flatCells: ->
     Array.prototype.concat.apply([],@cells)
 
   doomedCells: ->
-    cell for cell in @flatCells() when cell.gem?.doomed
+    cell for cell in @flatCells() when cell.gem?.doomed and cell.gem?.exploding isnt true
 
   emptyCells: ->
     cell for cell in @flatCells() when cell.gem is null
@@ -32,9 +32,8 @@ class Grid
     false
 
   clearDoomed: ->
-    for cell in @doomedCells()
-      cell.gem.explode()
-      GEMGAME.audio.play('pop')
+    for cell,i in @doomedCells()
+      cell.gem.explode(i*50)
       cell.gem = null
 
   checkDirty: ->
@@ -103,7 +102,7 @@ class Grid
     @cells[x]?[y]
 
   boardScale: (i=1)->
-    GEMGAME.screen.realWidth() / (@w+@margin*2) * i
+    GEMGAME.screen.realWidth() / @w * i
 
   addGems: ->
     for row in @cells

@@ -12,7 +12,8 @@ class Main
     @grid = new Grid(@grid_width, @grid_height,@)
     @drawBackground()
     @scene.add( @grid.object )
-    
+    @timer = new Timer(60,@grid.boardScale(),@grid_width)
+    @scene.add( @timer.object )
     GEMGAME.gem_factory.onload = @gemsLoaded
     @renderLoop(0)
 
@@ -49,6 +50,7 @@ class Main
   gemsLoaded: =>
     @logger.log "gems loaded"
     @grid.addGems()
+    @timer.start()
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
@@ -56,6 +58,7 @@ class Main
     GEMGAME.score.update t
     @roaming_light.update t
     @grid.update t
+    @timer.update t
     @renderer.render( @scene, @camera )
     @fps.update t
     
