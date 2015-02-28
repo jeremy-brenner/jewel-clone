@@ -33,7 +33,30 @@ class Main
 
     @scene.add( new THREE.AmbientLight( 0x666666 ) )
 
+
+    fontcfg = 
+      size: 30
+      height: 4
+      curveSegments: 3
+      font: "droid sans"
+      weight: "bold"
+      style: "normal"
+      bevelThickness: 1
+      bevelSize: 2
+      bevelEnabled: true
+      material: 0
+      extrudeMaterial: 1
+
     @scene.add( @roaming_light.object )
+   
+    textgeom = new THREE.TextGeometry( 'Hello World!', fontcfg )
+    textmat = new THREE.MeshPhongMaterial
+      color: 'green'
+      ambient: 'green'
+      shininess: 60
+    textmesh = new THREE.Mesh( textgeom, textmat )
+    @scene.add textmesh
+
 
   drawBackground: ->
     bg = new THREE.MeshLambertMaterial

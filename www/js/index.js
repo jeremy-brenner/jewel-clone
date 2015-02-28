@@ -292,7 +292,7 @@
       this.hurlTweenComplete = bind(this.hurlTweenComplete, this);
       this.hurlTweenTick = bind(this.hurlTweenTick, this);
       this.hurlStart = bind(this.hurlStart, this);
-      var x, y;
+      var i;
       this.id = id;
       this.def = def;
       this.def_id = def.id;
@@ -302,15 +302,8 @@
       this.chunks = (function() {
         var j, results;
         results = [];
-        for (x = j = 0; j <= 1; x = ++j) {
-          results.push((function() {
-            var k, results1;
-            results1 = [];
-            for (y = k = 0; k <= 1; y = ++k) {
-              results1.push(this.buildChunk(x, y));
-            }
-            return results1;
-          }).call(this));
+        for (i = j = 0; j <= 3; i = ++j) {
+          results.push(this.buildChunk());
         }
         return results;
       }).call(this);
@@ -329,7 +322,7 @@
       return this.object.position.y = y;
     };
 
-    Gem.prototype.buildChunk = function(x, y) {
+    Gem.prototype.buildChunk = function() {
       var mesh, object, outline;
       object = new THREE.Object3D();
       mesh = new THREE.Mesh(this.def.chunk, this.def.material);
@@ -339,32 +332,20 @@
       object.add(outline);
       object.rotation.set(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
       object.position.z = -1;
-      object.position.x = (x - 0.5) * 0.125;
-      object.position.y = (y - 0.5) * 0.125;
       return object;
     };
 
     Gem.prototype.explode = function(delay) {
-      var chunk, j, len, ref, results, row, x, y;
+      var chunk, j, len, ref;
       if (delay == null) {
         delay = 0;
       }
       ref = this.chunks;
-      results = [];
-      for (x = j = 0, len = ref.length; j < len; x = ++j) {
-        row = ref[x];
-        results.push((function() {
-          var k, len1, results1;
-          results1 = [];
-          for (y = k = 0, len1 = row.length; k < len1; y = ++k) {
-            chunk = row[y];
-            this.object.add(chunk);
-            results1.push(this.hurlChunk(x, y, delay));
-          }
-          return results1;
-        }).call(this));
+      for (j = 0, len = ref.length; j < len; j++) {
+        chunk = ref[j];
+        this.object.add(chunk);
       }
-      return results;
+      return this.hurlChunks(delay);
     };
 
     Gem.prototype.removeGem = function() {
@@ -373,55 +354,76 @@
     };
 
     Gem.prototype.hurlStart = function() {
-      var chunk, j, k, len, len1, ref, row, x, y;
+      var chunk, j, len, ref;
       this.removeGem();
       ref = this.chunks;
-      for (x = j = 0, len = ref.length; j < len; x = ++j) {
-        row = ref[x];
-        for (y = k = 0, len1 = row.length; k < len1; y = ++k) {
-          chunk = row[y];
-          chunk.position.z = 1;
-        }
+      for (j = 0, len = ref.length; j < len; j++) {
+        chunk = ref[j];
+        chunk.position.z = 1;
       }
       return GEMGAME.audio.play('pop');
     };
 
-    Gem.prototype.hurlChunk = function(cx, cy, delay) {
-      var hurl_tween, ra, rx, ry, td;
-      td = {
-        x: this.chunks[cx][cy].position.x,
-        y: this.chunks[cx][cy].position.y,
-        s: 1,
-        o: this.chunks[cx][cy]
+    Gem.prototype.hurlChunks = function(delay) {
+      var chunk, d, hurl_tween, th;
+      this.hurl_tween = {
+        x0: this.chunks[0].position.x,
+        y0: this.chunks[0].position.y,
+        x1: this.chunks[1].position.x,
+        y1: this.chunks[1].position.y,
+        x2: this.chunks[2].position.x,
+        y2: this.chunks[2].position.y,
+        x3: this.chunks[3].position.x,
+        y3: this.chunks[3].position.y,
+        s: 1
       };
-      ra = Math.PI * 2 * Math.random();
-      rx = Math.sin(ra) * GEMGAME.main.grid_height * (1 + Math.random());
-      ry = Math.cos(ra) * GEMGAME.main.grid_height * (1 + Math.random());
-      if (this.hurl_tweens == null) {
-        this.hurl_tweens = [];
-      }
-      this.hurl_tweens.push(td);
-      hurl_tween = new TWEEN.Tween(td).to({
-        x: rx,
-        y: ry,
+      d = (function() {
+        var j, len, ref, results;
+        ref = this.chunks;
+        results = [];
+        for (j = 0, len = ref.length; j < len; j++) {
+          chunk = ref[j];
+          results.push(this.randomDest());
+        }
+        return results;
+      }).call(this);
+      th = {
+        x0: d[0].x,
+        y0: d[0].y,
+        x1: d[1].x,
+        y1: d[1].y,
+        x2: d[2].x,
+        y2: d[2].y,
+        x3: d[3].x,
+        y3: d[3].y,
         s: 6
-      }, 2000).easing(TWEEN.Easing.Linear.None).onStart(this.hurlStart).onUpdate(this.hurlTweenTick).onComplete(this.hurlTweenComplete).delay(delay);
+      };
+      hurl_tween = new TWEEN.Tween(this.hurl_tween).to(th, 1500).easing(TWEEN.Easing.Linear.None).onStart(this.hurlStart).onUpdate(this.hurlTweenTick).onComplete(this.hurlTweenComplete).delay(delay);
       return hurl_tween.start();
     };
 
+    Gem.prototype.randomDest = function() {
+      var ra, rx, ry;
+      ra = Math.PI * 2 * Math.random();
+      rx = Math.sin(ra) * GEMGAME.main.grid_height * (1 + Math.random());
+      ry = Math.cos(ra) * GEMGAME.main.grid_height * (1 + Math.random());
+      return {
+        x: rx,
+        y: ry
+      };
+    };
+
     Gem.prototype.hurlTweenTick = function() {
-      var j, len, ref, results, tween;
-      ref = this.hurl_tweens;
+      var i, j, results;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        tween = ref[j];
-        tween.o.rotation.x += tween.x - tween.o.position.x;
-        tween.o.rotation.y += tween.y - tween.o.position.y;
-        tween.o.position.x = tween.x;
-        tween.o.position.y = tween.y;
-        tween.o.scale.x = tween.s;
-        tween.o.scale.y = tween.s;
-        results.push(tween.o.scale.z = tween.s);
+      for (i = j = 0; j <= 3; i = ++j) {
+        this.chunks[i].rotation.x += this.hurl_tween["x" + i] - this.chunks[i].position.x;
+        this.chunks[i].rotation.y += this.hurl_tween["y" + i] - this.chunks[i].position.y;
+        this.chunks[i].position.x = this.hurl_tween["x" + i];
+        this.chunks[i].position.y = this.hurl_tween["y" + i];
+        this.chunks[i].scale.x = this.hurl_tween.s;
+        this.chunks[i].scale.y = this.hurl_tween.s;
+        results.push(this.chunks[i].scale.z = this.hurl_tween.s);
       }
       return results;
     };
@@ -1016,6 +1018,7 @@
     }
 
     Main.prototype.initThree = function() {
+      var fontcfg, textgeom, textmat, textmesh;
       document.body.style.zoom = 1 / window.devicePixelRatio;
       this.scene = new THREE.Scene();
       this.camera = new THREE.OrthographicCamera(0, GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight(), 0, 0, 200000);
@@ -1027,7 +1030,28 @@
       this.renderer.setSize(GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight());
       document.body.appendChild(this.renderer.domElement);
       this.scene.add(new THREE.AmbientLight(0x666666));
-      return this.scene.add(this.roaming_light.object);
+      fontcfg = {
+        size: 30,
+        height: 4,
+        curveSegments: 3,
+        font: "droid sans",
+        weight: "bold",
+        style: "normal",
+        bevelThickness: 1,
+        bevelSize: 2,
+        bevelEnabled: true,
+        material: 0,
+        extrudeMaterial: 1
+      };
+      this.scene.add(this.roaming_light.object);
+      textgeom = new THREE.TextGeometry('Hello World!', fontcfg);
+      textmat = new THREE.MeshPhongMaterial({
+        color: 'green',
+        ambient: 'green',
+        shininess: 60
+      });
+      textmesh = new THREE.Mesh(textgeom, textmat);
+      return this.scene.add(textmesh);
     };
 
     Main.prototype.drawBackground = function() {

@@ -6,9 +6,7 @@ class Gem
     @object = new THREE.Object3D()
     @mesh = new THREE.Mesh( def.geometry, def.material )
     @outline = new THREE.Mesh( def.geometry, def.outline )
-    @chunks = for x in [0..1]
-      for y in [0..1]
-        @buildChunk x,y
+    @chunks = ( @buildChunk() for i in [0..3] )
 
     @outline.scale.multiplyScalar(1.125)
 
@@ -23,7 +21,7 @@ class Gem
   setY: (y) ->
     @object.position.y = y
 
-  buildChunk: (x,y) ->
+  buildChunk: ->
     object = new THREE.Object3D()
     mesh = new THREE.Mesh( @def.chunk, @def.material )
     outline = new THREE.Mesh( @def.chunk, @def.outline )
@@ -32,15 +30,11 @@ class Gem
     object.add outline
     object.rotation.set Math.PI*2*Math.random(), Math.PI*2*Math.random(), Math.PI*2*Math.random()
     object.position.z = -1
-    object.position.x = (x-0.5)*0.125
-    object.position.y = (y-0.5)*0.125
     object 
 
   explode: (delay=0) ->
-    for row,x in @chunks
-      for chunk,y in row
-        @object.add chunk
-        @hurlChunk(x,y,delay)
+    @object.add(chunk) for chunk in @chunks
+    @hurlChunks(delay)
 
   removeGem: ->
     @object.remove @mesh
@@ -48,22 +42,38 @@ class Gem
 
   hurlStart: =>
     @removeGem()
-    for row,x in @chunks
-      for chunk,y in row
-        chunk.position.z = 1
+    chunk.position.z = 1 for chunk in @chunks
     GEMGAME.audio.play('pop')
 
-  hurlChunk: (cx,cy,delay) ->
-    td = { x: @chunks[cx][cy].position.x, y: @chunks[cx][cy].position.y, s: 1, o: @chunks[cx][cy] }
-    ra = Math.PI*2*Math.random()
-    rx = Math.sin(ra) * GEMGAME.main.grid_height*(1+Math.random())
-    ry = Math.cos(ra) * GEMGAME.main.grid_height*(1+Math.random())
+  hurlChunks: (delay) ->
 
+    @hurl_tween = { 
+      x0: @chunks[0].position.x, 
+      y0: @chunks[0].position.y, 
+      x1: @chunks[1].position.x, 
+      y1: @chunks[1].position.y, 
+      x2: @chunks[2].position.x, 
+      y2: @chunks[2].position.y, 
+      x3: @chunks[3].position.x, 
+      y3: @chunks[3].position.y, 
+      s: 1 
+    }
 
-    @hurl_tweens ?= []
-    @hurl_tweens.push td
-    hurl_tween = new TWEEN.Tween( td )
-      .to( { x: rx, y: ry, s: 6 }, 2000 ) 
+    d = ( @randomDest() for chunk in @chunks )
+    th =  { 
+      x0: d[0].x
+      y0: d[0].y 
+      x1: d[1].x 
+      y1: d[1].y 
+      x2: d[2].x 
+      y2: d[2].y 
+      x3: d[3].x 
+      y3: d[3].y 
+      s: 6 
+    }
+
+    hurl_tween = new TWEEN.Tween( @hurl_tween )
+      .to( th, 1500 ) 
        .easing( TWEEN.Easing.Linear.None )
        .onStart( @hurlStart )
        .onUpdate( @hurlTweenTick )
@@ -71,15 +81,21 @@ class Gem
        .delay(delay)
     hurl_tween.start()
 
+  randomDest: ->
+    ra = Math.PI*2*Math.random()
+    rx = Math.sin(ra) * GEMGAME.main.grid_height*(1+Math.random())
+    ry = Math.cos(ra) * GEMGAME.main.grid_height*(1+Math.random())
+    { x: rx, y: ry }
+
   hurlTweenTick: =>
-    for tween in @hurl_tweens
-      tween.o.rotation.x += tween.x-tween.o.position.x
-      tween.o.rotation.y += tween.y-tween.o.position.y
-      tween.o.position.x = tween.x
-      tween.o.position.y = tween.y
-      tween.o.scale.x = tween.s
-      tween.o.scale.y = tween.s
-      tween.o.scale.z = tween.s
+    for i in [0..3]
+      @chunks[i].rotation.x += @hurl_tween["x#{i}"]-@chunks[i].position.x
+      @chunks[i].rotation.y += @hurl_tween["y#{i}"]-@chunks[i].position.y
+      @chunks[i].position.x = @hurl_tween["x#{i}"]
+      @chunks[i].position.y = @hurl_tween["y#{i}"]
+      @chunks[i].scale.x = @hurl_tween.s
+      @chunks[i].scale.y = @hurl_tween.s
+      @chunks[i].scale.z = @hurl_tween.s
 
   hurlTweenComplete: =>
     GEMGAME.main.grid.object.remove( @object )
