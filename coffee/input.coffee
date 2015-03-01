@@ -1,4 +1,4 @@
-class Input
+class Input extends THREE.EventDispatcher
   constructor: ->
     @touching = false
     @bindEvents()
@@ -12,7 +12,7 @@ class Input
       alpha: 0
       beta: 0
       gamma: 0
-
+    super
 
   bindEvents: ->
     window.addEventListener 'touchstart', @touchStart

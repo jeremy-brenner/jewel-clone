@@ -83,8 +83,8 @@ class Gem
 
   randomDest: ->
     ra = Math.PI*2*Math.random()
-    rx = Math.sin(ra) * GEMGAME.main.grid_height*(1+Math.random())
-    ry = Math.cos(ra) * GEMGAME.main.grid_height*(1+Math.random())
+    rx = Math.sin(ra) * GEMGAME.grid_height*(1+Math.random())
+    ry = Math.cos(ra) * GEMGAME.grid_height*(1+Math.random())
     { x: rx, y: ry }
 
   hurlTweenTick: =>
@@ -98,7 +98,7 @@ class Gem
       @chunks[i].scale.z = @hurl_tween.s
 
   hurlTweenComplete: =>
-    GEMGAME.main.grid.object.remove( @object )
+    GEMGAME.grid.object.remove( @object )
 
   animationComplete: =>
     @object.position.z = 0

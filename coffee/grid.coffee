@@ -126,3 +126,6 @@ class Grid
     for x in [0...@h]
       for y in [0...@w]
         new Cell(x,y)
+
+  show: ->
+    cell.show() for cell in @flatCells()

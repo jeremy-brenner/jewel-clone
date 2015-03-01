@@ -17,6 +17,8 @@ class Menu
       main: [
         label: 'New Game'
         color: 'green'
+        exec: ->
+          GEMGAME.start()
       ,
         label: 'Config'
         color: 'yellow'
@@ -41,10 +43,10 @@ class Menu
     GEMGAME.realWidth()/2 - width/2
 
   open: (menu) ->
-    @current = menu
-    @createItem(item,i,@menu[menu].length) for item,i in @menu[menu]
+    @current = @menu[menu]
+    @createItem(item,i) for item,i in @current
 
-  createItem: (item,i,t) ->
+  createItem: (item,i) ->
     mat = new THREE.MeshPhongMaterial
       color: item.color
       ambient: item.color
@@ -64,7 +66,7 @@ class Menu
  
     item.object.position.x = @center item.width
    
-    item.object.position.y = i*@fontSize()*-2 + GEMGAME.realHeight()/2 + t*@fontSize()/2
+    item.object.position.y = i*@fontSize()*-2 + GEMGAME.realHeight()/2 + @current.length*@fontSize()/2
 
     @object.add item.object
     
@@ -90,22 +92,60 @@ class Menu
     object.add outline_mesh
     object
 
-  close: ->
-    @object.remove(item.object) for item,i in @menu[@current]
+  choose: (index) ->
+    @chosen = index
+    @choseAnimation()
+   
+  chooseComplete: =>
+    @current[@chosen].exec?()     
+    @chosen = null 
     @current = null
+
+  choseAnimation: () ->
+    @tween_data = {}
+    close_to = {}
+    chosen_to = {}
+    for item,i in @current 
+      @tween_data[i] = 1
+      if i isnt @chosen
+        close_to[i] = 0
+      else
+        chosen_to[i] = 0
+      
+
+    close_tween = new TWEEN.Tween( @tween_data )
+             .to( close_to, 500 ) 
+             .easing( TWEEN.Easing.Linear.None )
+             .onUpdate( @tweenTick )
+    close_tween.start()  
+
+    chosen_tween = new TWEEN.Tween( @tween_data )
+             .to( chosen_to, 1000 ) 
+             .easing( TWEEN.Easing.Back.In )
+             .onUpdate( @tweenTick )
+             .onComplete( @chooseComplete )
+    chosen_tween.start()  
+
+  tweenTick: =>
+    for i,s of @tween_data
+      if s is 0
+        @object.remove @current[i].object
+      else
+        @current[i].object.scale.x = s
+        @current[i].object.scale.y = s
+        @current[i].object.position.x = @center @current[i].width*s
 
   update: (t) ->
     if GEMGAME.input.touching
       ty = GEMGAME.realHeight()-GEMGAME.input.start.y
       i = @checkTouch(ty)
       if i isnt false
-        @menu[@current][i].exec?()
-        @close()
+        @choose(i)
 
   checkTouch: (ty) ->
     return false if @current is null
-    return false if ty > @fontSize()+@menu[@current][0].object.position.y
-    for item,i in @menu[@current]
+    return false if ty > @fontSize()+@current[0].object.position.y
+    for item,i in @current
       return i if ty > item.object.position.y
     return false
    

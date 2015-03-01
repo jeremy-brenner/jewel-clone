@@ -66,3 +66,6 @@ class Main
     @renderer.render( @scene, @camera )
     @fps.update t
     
+  start: ->
+    @grid.show()
+    @grid.addGems()

@@ -55,13 +55,13 @@ class Cell
   match: (def_id,dir) ->
     cell = switch dir
       when 'left'
-        GEMGAME.main.grid.cells[@x-1]?[@y]
+        GEMGAME.grid.cells[@x-1]?[@y]
       when 'right'
-        GEMGAME.main.grid.cells[@x+1]?[@y]
+        GEMGAME.grid.cells[@x+1]?[@y]
       when 'up'
-        GEMGAME.main.grid.cells[@x]?[@y+1]
+        GEMGAME.grid.cells[@x]?[@y+1]
       when 'down'
-        GEMGAME.main.grid.cells[@x]?[@y-1]
+        GEMGAME.grid.cells[@x]?[@y-1]
 
     return [] unless cell
 
@@ -73,6 +73,23 @@ class Cell
   squareOpacity: ->
     if @y%2 isnt @x%2 then 0.2 else 0.5
 
+  squareAxis: ->
+    if @y%2 isnt @x%2 then 'x' else 'y'
+
+  hide: ->
+    @square.rotation[@squareAxis()] = Math.PI/2
+
+  show: ->
+    @tween_data = { r: @square.rotation[@squareAxis()] }
+    show_tween = new TWEEN.Tween( @tween_data )
+             .to( { r: 0 }, 1500 ) 
+             .easing( TWEEN.Easing.Quartic.In )
+             .onUpdate( @tweenTick )
+    show_tween.start()  
+
+  tweenTick: =>
+    @square.rotation[@squareAxis()] = @tween_data.r 
+
   buildSquare: ->
     mat = new THREE.MeshBasicMaterial
       transparent: true
@@ -82,6 +99,7 @@ class Cell
     @square = new THREE.Mesh geom,mat
     @square.position.x = @xPos()
     @square.position.y = @yPos()
+    @square.rotation[@squareAxis()] = Math.PI/2
 
   highlite: (t) ->
     @gem?.highlite(t)
