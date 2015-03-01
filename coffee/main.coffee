@@ -3,77 +3,58 @@ class Main
   constructor: ->
     @grid_width = 8
     @grid_height = 8
-    @logger = new Logger(false)
-    @logger.log "logger started"
-    @fps = new Fps()
-    @roaming_light = new RoamingLight(GEMGAME.screen.realWidth())
-    @logger.log 'init three'
+
+
+  init: ->
     @initThree()
+    @input = new Input()
+    @score = new Score()
+    @gem_factory = new GemFactory()
+    @audio = new AudioManager(['sounds/woosh.mp3','sounds/pop.mp3'])
+    @fps = new Fps()
+    @roaming_light = new RoamingLight(GEMGAME.realWidth())   
     @grid = new Grid(@grid_width, @grid_height,@)
-    @drawBackground()
+    @menu = new Menu()
+    @background = new Background()
+    
+    @scene.add( @menu.object )
+    @scene.add( @roaming_light.object )
+    @scene.add( @background.object )
     @scene.add( @grid.object )
-    @timer = new Timer(60,@grid.boardScale(),@grid_width)
-    @scene.add( @timer.object )
+
     GEMGAME.gem_factory.onload = @gemsLoaded
     @renderLoop(0)
+
+  realWidth: ->
+    window.innerWidth * window.devicePixelRatio
+
+  realHeight: ->
+    window.innerHeight * window.devicePixelRatio
+
+  aspect: ->
+    window.innerWidth / window.innerHeight
 
   initThree: ->
     document.body.style.zoom = 1 / window.devicePixelRatio
     @scene = new THREE.Scene()
 
-    @camera = new THREE.OrthographicCamera( 0, GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight(), 0, 0, 200000 )
+    @camera = new THREE.OrthographicCamera( 0, GEMGAME.realWidth(), GEMGAME.realHeight(), 0, 0, 200000 )
 
     @camera.position.z = 500
     @camera.updateProjectionMatrix()
     @renderer = new THREE.WebGLRenderer
       antialias: true
 
-    @renderer.setSize GEMGAME.screen.realWidth(), GEMGAME.screen.realHeight()
+    @renderer.setSize GEMGAME.realWidth(), GEMGAME.realHeight()
     document.body.appendChild @renderer.domElement 
 
     @scene.add( new THREE.AmbientLight( 0x666666 ) )
 
 
-    fontcfg = 
-      size: 30
-      height: 4
-      curveSegments: 3
-      font: "droid sans"
-      weight: "bold"
-      style: "normal"
-      bevelThickness: 1
-      bevelSize: 2
-      bevelEnabled: true
-      material: 0
-      extrudeMaterial: 1
-
-    @scene.add( @roaming_light.object )
-   
-    textgeom = new THREE.TextGeometry( 'Hello World!', fontcfg )
-    textmat = new THREE.MeshPhongMaterial
-      color: 'green'
-      ambient: 'green'
-      shininess: 60
-    textmesh = new THREE.Mesh( textgeom, textmat )
-    @scene.add textmesh
-
-
-  drawBackground: ->
-    bg = new THREE.MeshLambertMaterial
-      map: THREE.ImageUtils.loadTexture( 'img/wallpaper.png' ) 
-    
-    bgg = new THREE.PlaneBufferGeometry GEMGAME.screen.realHeight(), GEMGAME.screen.realHeight() 
-    background = new THREE.Mesh( bgg, bg )
-    background.position.x = GEMGAME.screen.realWidth()/2
-    background.position.y = GEMGAME.screen.realHeight()/2
-    background.position.z = -100000
-
-    @scene.add( background )
-
   gemsLoaded: =>
-    @logger.log "gems loaded"
-    @grid.addGems()
-    @timer.start()
+    @menu.open 'main'
+    #@grid.addGems()
+    #@timer.start()
 
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
@@ -81,7 +62,7 @@ class Main
     GEMGAME.score.update t
     @roaming_light.update t
     @grid.update t
-    @timer.update t
+    @menu.update t
     @renderer.render( @scene, @camera )
     @fps.update t
     

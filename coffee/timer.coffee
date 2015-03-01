@@ -23,7 +23,7 @@ class Timer
       shininess: 60
 
     @cylinder = new THREE.Mesh( geometry, material )
-    @object.add @cylinder    
+#    @object.add @cylinder    
 
   start: ->
     @started = true

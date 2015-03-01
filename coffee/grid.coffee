@@ -94,7 +94,7 @@ class Grid
     @selected?.reset()  
 
   topOffset: ->
-    GEMGAME.screen.realHeight() - @boardScale(@h+@margin+@footer)
+    GEMGAME.realHeight() - @boardScale(@h+@margin+@footer)
 
   touchedCell: (pos) ->
     x = Math.floor pos.x/@boardScale()-@margin
@@ -102,7 +102,7 @@ class Grid
     @cells[x]?[y]
 
   boardScale: (i=1)->
-    GEMGAME.screen.realWidth() / @w * i
+    GEMGAME.realWidth() / @w * i
 
   addGems: ->
     for row in @cells
