@@ -879,14 +879,14 @@
       return (ref = this.selected) != null ? ref.reset() : void 0;
     };
 
-    Grid.prototype.topOffset = function() {
-      return GEMGAME.realHeight() - this.boardScale(this.h + this.margin + this.footer);
+    Grid.prototype.bottomOffset = function() {
+      return this.boardScale(this.footer);
     };
 
     Grid.prototype.touchedCell = function(pos) {
       var ref, x, y;
       x = Math.floor(pos.x / this.boardScale() - this.margin);
-      y = this.h - 1 - Math.floor((pos.y - this.topOffset()) / this.boardScale());
+      y = Math.floor((pos.y - this.bottomOffset()) / this.boardScale());
       return (ref = this.cells[x]) != null ? ref[y] : void 0;
     };
 
@@ -983,6 +983,7 @@
       this.touchMove = bind(this.touchMove, this);
       this.touchEnd = bind(this.touchEnd, this);
       this.touchStart = bind(this.touchStart, this);
+      console.log(THREE.EventDispatcher);
       this.touching = false;
       this.bindEvents();
       this.start = {
@@ -998,7 +999,6 @@
         beta: 0,
         gamma: 0
       };
-      Input.__super__.constructor.apply(this, arguments);
     }
 
     Input.prototype.bindEvents = function() {
@@ -1010,27 +1010,52 @@
 
     Input.prototype.touchStart = function(e) {
       this.touching = true;
-      this.start.x = e.touches[0].screenX * window.devicePixelRatio;
-      this.start.y = e.touches[0].screenY * window.devicePixelRatio;
-      return this.move = {
+      this.start.x = this.touchX(e);
+      this.start.y = this.realHeight() - this.touchY(e);
+      this.move = {
         x: this.start.x,
         y: this.start.y
       };
+      return this.dispatchEvent({
+        type: 'touchstart',
+        x: this.start.x,
+        y: this.start.y
+      });
     };
 
     Input.prototype.touchEnd = function(e) {
-      return this.touching = false;
+      this.touching = false;
+      return this.dispatchEvent({
+        type: 'touchend'
+      });
     };
 
     Input.prototype.touchMove = function(e) {
-      this.move.x = e.touches[0].screenX * window.devicePixelRatio;
-      return this.move.y = e.touches[0].screenY * window.devicePixelRatio;
+      this.move.x = this.touchX(e);
+      this.move.y = this.realHeight() - this.touchY(e);
+      return this.dispatchEvent({
+        type: 'touchmove',
+        x: this.move.x,
+        y: this.move.y
+      });
     };
 
     Input.prototype.updateOrientation = function(orientation) {
       this.orientation.alpha = orientation.alpha || 0;
       this.orientation.gamma = orientation.gamma || 0;
       return this.orientation.beta = orientation.beta || 0;
+    };
+
+    Input.prototype.touchX = function(e) {
+      return e.touches[0].screenX * window.devicePixelRatio;
+    };
+
+    Input.prototype.touchY = function(e) {
+      return e.touches[0].screenY * window.devicePixelRatio;
+    };
+
+    Input.prototype.realHeight = function() {
+      return window.innerHeight * window.devicePixelRatio;
     };
 
     return Input;
@@ -1061,9 +1086,11 @@
   Main = (function() {
     function Main() {
       this.renderLoop = bind(this.renderLoop, this);
+      this.closeAbout = bind(this.closeAbout, this);
       this.gemsLoaded = bind(this.gemsLoaded, this);
       this.grid_width = 8;
       this.grid_height = 8;
+      document.getElementById('closebutton').addEventListener('touchstart', this.closeAbout);
     }
 
     Main.prototype.init = function() {
@@ -1115,13 +1142,25 @@
       return this.menu.open('main');
     };
 
+    Main.prototype.showAbout = function() {
+      var about;
+      about = document.getElementById('about');
+      about.style.fontSize = (this.realWidth() / 25) + "px";
+      return about.className += ' show';
+    };
+
+    Main.prototype.closeAbout = function(e) {
+      document.getElementById('about').className = '';
+      e.stopPropagation();
+      return this.menu.open('main');
+    };
+
     Main.prototype.renderLoop = function(t) {
       requestAnimationFrame(this.renderLoop);
       TWEEN.update(t);
       GEMGAME.score.update(t);
       this.roaming_light.update(t);
       this.grid.update(t);
-      this.menu.update(t);
       this.renderer.render(this.scene, this.camera);
       return this.fps.update(t);
     };
@@ -1139,6 +1178,7 @@
     function Menu() {
       this.tweenTick = bind(this.tweenTick, this);
       this.chooseComplete = bind(this.chooseComplete, this);
+      this.handleTouch = bind(this.handleTouch, this);
       this.object = new THREE.Object3D();
       this.fontcfg = {
         size: this.fontSize(),
@@ -1152,6 +1192,7 @@
         bevelEnabled: true,
         extrudeMaterial: 1
       };
+      this.chosen = null;
       this.menu = {
         main: [
           {
@@ -1162,10 +1203,16 @@
             }
           }, {
             label: 'Config',
-            color: 'yellow'
+            color: 'yellow',
+            exec: function() {
+              return GEMGAME.menu.open('main');
+            }
           }, {
             label: 'About',
-            color: 'teal'
+            color: 'teal',
+            exec: function() {
+              return GEMGAME.showAbout();
+            }
           }, {
             label: 'Quit',
             color: 'red',
@@ -1178,7 +1225,19 @@
         side: THREE.BackSide
       });
       this.meshes = [];
+      this.busy = false;
+      GEMGAME.input.addEventListener('touchstart', this.handleTouch);
     }
+
+    Menu.prototype.handleTouch = function(e) {
+      var i;
+      if (this.menuIsOpen()) {
+        i = this.checkTouch(e.y);
+        if (i !== false) {
+          return this.choose(i);
+        }
+      }
+    };
 
     Menu.prototype.fontSize = function() {
       return GEMGAME.realWidth() / 12;
@@ -1189,13 +1248,23 @@
     };
 
     Menu.prototype.open = function(menu) {
-      var i, item, j, len, ref, results;
+      var i, item, j, k, len, len1, ref, ref1, results;
       this.current = this.menu[menu];
       ref = this.current;
-      results = [];
       for (i = j = 0, len = ref.length; j < len; i = ++j) {
         item = ref[i];
-        results.push(this.createItem(item, i));
+        if (!item.object) {
+          this.createItem(item, i);
+        }
+      }
+      ref1 = this.current;
+      results = [];
+      for (k = 0, len1 = ref1.length; k < len1; k++) {
+        item = ref1[k];
+        item.object.scale.x = 1;
+        item.object.scale.y = 1;
+        item.object.position.x = this.center(item.width);
+        results.push(this.object.add(item.object));
       }
       return results;
     };
@@ -1230,8 +1299,7 @@
         }
       }
       item.object.position.x = this.center(item.width);
-      item.object.position.y = i * this.fontSize() * -2 + GEMGAME.realHeight() / 2 + this.current.length * this.fontSize() / 2;
-      return this.object.add(item.object);
+      return item.object.position.y = i * this.fontSize() * -2 + GEMGAME.realHeight() / 2 + this.current.length * this.fontSize() / 2;
     };
 
     Menu.prototype.createLetter = function(letter, mat) {
@@ -1266,12 +1334,11 @@
     };
 
     Menu.prototype.chooseComplete = function() {
-      var base;
-      if (typeof (base = this.current[this.chosen]).exec === "function") {
-        base.exec();
-      }
+      var exec;
+      exec = this.current[this.chosen].exec;
       this.chosen = null;
-      return this.current = null;
+      this.current = null;
+      return typeof exec === "function" ? exec() : void 0;
     };
 
     Menu.prototype.choseAnimation = function() {
@@ -1301,33 +1368,23 @@
       results = [];
       for (i in ref) {
         s = ref[i];
-        if (s === 0) {
-          results.push(this.object.remove(this.current[i].object));
-        } else {
+        if (s !== 0) {
           this.current[i].object.scale.x = s;
           this.current[i].object.scale.y = s;
           results.push(this.current[i].object.position.x = this.center(this.current[i].width * s));
+        } else {
+          results.push(this.object.remove(this.current[i].object));
         }
       }
       return results;
     };
 
-    Menu.prototype.update = function(t) {
-      var i, ty;
-      if (GEMGAME.input.touching) {
-        ty = GEMGAME.realHeight() - GEMGAME.input.start.y;
-        i = this.checkTouch(ty);
-        if (i !== false) {
-          return this.choose(i);
-        }
-      }
+    Menu.prototype.menuIsOpen = function() {
+      return this.current !== null && this.chosen === null;
     };
 
     Menu.prototype.checkTouch = function(ty) {
       var i, item, j, len, ref;
-      if (this.current === null) {
-        return false;
-      }
       if (ty > this.fontSize() + this.current[0].object.position.y) {
         return false;
       }

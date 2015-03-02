@@ -3,7 +3,7 @@ class Main
   constructor: ->
     @grid_width = 8
     @grid_height = 8
-
+    document.getElementById('closebutton').addEventListener('touchstart', @closeAbout )
 
   init: ->
     @initThree()
@@ -56,13 +56,22 @@ class Main
     #@grid.addGems()
     #@timer.start()
 
+  showAbout: ->
+    about = document.getElementById('about')
+    about.style.fontSize = "#{@realWidth()/25}px"
+    about.className += ' show'
+
+  closeAbout: (e) =>
+    document.getElementById('about').className = ''    
+    e.stopPropagation()
+    @menu.open('main')
+
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     TWEEN.update t
     GEMGAME.score.update t
     @roaming_light.update t
     @grid.update t
-    @menu.update t
     @renderer.render( @scene, @camera )
     @fps.update t
     

@@ -53,6 +53,34 @@ canvas {
   display: inline-block;
 }
 
+#about {
+  position: absolute;
+  box-sizing: border-box;
+  color: white;
+  width: 90%;
+  top: 40%;
+  margin: 5%;
+  text-shadow: 1px 1px 3px black;
+  z-index: 10;    
+  display: none;
+  border-radius: 15px;
+  border: 2px solid white;
+  background-color: rgba(50,50,50,0.8);
+  padding: 5%;
+}
+
+#about > #closebutton {
+  display: inline-block;
+  padding: 5px;
+  background-color: gray;
+  box-shadow: 2px 2px black;
+  margin-top: 10px;
+}
+
+#about.show {
+  display: block;
+}
+
 #score {
   top: 0px;
   left: 0px;

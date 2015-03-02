@@ -12,7 +12,7 @@ class Menu
       bevelSize: 5
       bevelEnabled: true
       extrudeMaterial: 1
-
+    @chosen = null
     @menu =
       main: [
         label: 'New Game'
@@ -22,9 +22,13 @@ class Menu
       ,
         label: 'Config'
         color: 'yellow'
+        exec: ->
+          GEMGAME.menu.open('main')
       , 
         label: 'About'
         color: 'teal'
+        exec: ->
+          GEMGAME.showAbout()
       ,
         label: 'Quit'
         color: 'red'
@@ -35,6 +39,14 @@ class Menu
       side: THREE.BackSide 
 
     @meshes = []
+    @busy = false
+    GEMGAME.input.addEventListener 'touchstart', @handleTouch
+
+  handleTouch: (e) =>
+    if @menuIsOpen() 
+      i = @checkTouch(e.y)
+      if i isnt false
+        @choose(i)
 
   fontSize: ->
     GEMGAME.realWidth()/12
@@ -44,7 +56,12 @@ class Menu
 
   open: (menu) ->
     @current = @menu[menu]
-    @createItem(item,i) for item,i in @current
+    @createItem(item,i) for item,i in @current when not item.object
+    for item in @current
+      item.object.scale.x = 1
+      item.object.scale.y = 1
+      item.object.position.x = @center item.width
+      @object.add item.object 
 
   createItem: (item,i) ->
     mat = new THREE.MeshPhongMaterial
@@ -68,7 +85,7 @@ class Menu
    
     item.object.position.y = i*@fontSize()*-2 + GEMGAME.realHeight()/2 + @current.length*@fontSize()/2
 
-    @object.add item.object
+
     
   createLetter: (letter,mat) ->
     return if letter is ' '
@@ -97,9 +114,10 @@ class Menu
     @choseAnimation()
    
   chooseComplete: =>
-    @current[@chosen].exec?()     
+    exec = @current[@chosen].exec  
     @chosen = null 
     @current = null
+    exec?()
 
   choseAnimation: () ->
     @tween_data = {}
@@ -128,22 +146,17 @@ class Menu
 
   tweenTick: =>
     for i,s of @tween_data
-      if s is 0
-        @object.remove @current[i].object
-      else
+      if s isnt 0
         @current[i].object.scale.x = s
         @current[i].object.scale.y = s
         @current[i].object.position.x = @center @current[i].width*s
+      else
+        @object.remove @current[i].object
 
-  update: (t) ->
-    if GEMGAME.input.touching
-      ty = GEMGAME.realHeight()-GEMGAME.input.start.y
-      i = @checkTouch(ty)
-      if i isnt false
-        @choose(i)
+  menuIsOpen: ->
+    @current isnt null and @chosen is null
 
   checkTouch: (ty) ->
-    return false if @current is null
     return false if ty > @fontSize()+@current[0].object.position.y
     for item,i in @current
       return i if ty > item.object.position.y
