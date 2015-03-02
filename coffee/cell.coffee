@@ -82,7 +82,7 @@ class Cell
   show: ->
     @tween_data = { r: @square.rotation[@squareAxis()] }
     show_tween = new TWEEN.Tween( @tween_data )
-             .to( { r: 0 }, 1500 ) 
+             .to( { r: 0 }, 1000 ) 
              .easing( TWEEN.Easing.Quartic.In )
              .onUpdate( @tweenTick )
     show_tween.start()  

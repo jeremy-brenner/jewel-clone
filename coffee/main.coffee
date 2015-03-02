@@ -9,14 +9,16 @@ class Main
     @initThree()
     @input = new Input()
     @score = new Score()
+    @score.addEventListener('goalreached', @goalReached )
     @gem_factory = new GemFactory()
     @audio = new AudioManager(['sounds/woosh.mp3','sounds/pop.mp3'])
-    @fps = new Fps()
     @roaming_light = new RoamingLight(GEMGAME.realWidth())   
     @grid = new Grid(@grid_width, @grid_height,@)
     @menu = new Menu()
     @background = new Background()
-    
+    @progress_meter = new ProgressMeter()
+
+    @scene.add( @progress_meter.object )
     @scene.add( @menu.object )
     @scene.add( @roaming_light.object )
     @scene.add( @background.object )
@@ -53,8 +55,6 @@ class Main
 
   gemsLoaded: =>
     @menu.open 'main'
-    #@grid.addGems()
-    #@timer.start()
 
   showAbout: ->
     about = document.getElementById('about')
@@ -73,8 +73,13 @@ class Main
     @roaming_light.update t
     @grid.update t
     @renderer.render( @scene, @camera )
-    @fps.update t
     
   start: ->
     @grid.show()
     @grid.addGems()
+    @score.setGoal(100)
+    @progress_meter.show()
+    @progress_meter.setGoal(100)
+
+  goalReached: (e) =>
+    @score.reset()

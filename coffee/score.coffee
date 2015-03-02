@@ -1,11 +1,15 @@
-class Score
+class Score extends THREE.EventDispatcher
   constructor: ->
     @score = 0
     @cleared = 0
     @chain = 0
+    @goal = 0
     @longest_chain = 0
     @last_updated = 0
     @update_interval = 1000
+
+  setGoal: (goal) ->
+    @goal = goal
 
   worth: (cleared) ->
     (cleared-2) * cleared * (@chain+1)
@@ -18,6 +22,33 @@ class Score
     @score += @worth(cleared)
     @cleared += cleared
     @updateChain()
+    @scoreEvent()
+    if @cleared >= @goal
+      @goalEvent()
+
+  reset: ->
+    @score = 0
+    @cleared = 0
+    @chain = 0
+    @longest_chain = 0
+    @scoreEvent()
+
+  scoreEvent: ->
+    @dispatchEvent 
+      type: 'scorechange'
+      score: @score
+      cleared: @cleared
+      chain: @chain    
+      goal: @goal  
+
+  goalEvent: ->
+    @dispatchEvent 
+      type: 'goalreached'
+      score: @score
+      cleared: @cleared
+      chain: @chain  
+      goal: @goal  
+
 
   timeToUpdate: (t) ->
     t-@last_updated > @update_interval

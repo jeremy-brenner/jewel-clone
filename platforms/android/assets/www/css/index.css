@@ -85,19 +85,3 @@ canvas {
   top: 0px;
   left: 0px;
 }
-
-#fps {
-  top: 0px;
-  left: 0px;
-}
-
-
-#log {
-  top: 60px;
-  left: 0px;
-}
-
-#input {
-  top: 0px;
-  left: 200px;
-}

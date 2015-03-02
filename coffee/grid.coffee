@@ -11,7 +11,6 @@ class Grid
     @object.add(@board)
     @object.position.x = @boardScale(@margin)
     @object.position.y = @boardScale(@margin+@footer)
-    #GEMGAME.screen.realHeight()/2 - @boardScale(@h)/2
     @object.scale.multiplyScalar @boardScale()
 
   flatCells: ->
