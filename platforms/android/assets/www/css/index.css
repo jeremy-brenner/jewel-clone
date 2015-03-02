@@ -73,8 +73,11 @@ canvas {
   display: inline-block;
   padding: 5px;
   background-color: gray;
+  text-shadow: 1px 1px 2px black;
   box-shadow: 2px 2px black;
   margin-top: 10px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 #about.show {
@@ -84,4 +87,10 @@ canvas {
 #score {
   top: 0px;
   left: 0px;
+}
+
+.link {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
 }

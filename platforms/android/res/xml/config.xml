@@ -9,7 +9,7 @@
         Jeremy J. Brenner
     </author>
     <content src="index.html" />
-    <access origin="*" />
+    <access origin="http://127.0.0.1*" />
     <preference name="Fullscreen" value="true" />
     <preference name="Orientation" value="portrait" />
 </widget>

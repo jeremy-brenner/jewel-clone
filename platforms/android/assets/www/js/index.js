@@ -169,7 +169,7 @@
     };
 
     Cell.prototype.flagCleared = function() {
-      var j, k, len, len1, m, ref, ref1;
+      var j, l, len, len1, m, ref, ref1;
       if (this.horizontalMatches().length >= 3) {
         GEMGAME.score.add(this.horizontalMatches().length);
         ref = this.horizontalMatches();
@@ -181,8 +181,8 @@
       if (this.verticalMatches().length >= 3) {
         GEMGAME.score.add(this.verticalMatches().length);
         ref1 = this.verticalMatches();
-        for (k = 0, len1 = ref1.length; k < len1; k++) {
-          m = ref1[k];
+        for (l = 0, len1 = ref1.length; l < len1; l++) {
+          m = ref1[l];
           m.doomed = true;
         }
       }
@@ -337,7 +337,9 @@
 
   })();
 
-  Gem = (function() {
+  Gem = (function(superClass) {
+    extend(Gem, superClass);
+
     function Gem(def, id) {
       this.tweenTick = bind(this.tweenTick, this);
       this.animationComplete = bind(this.animationComplete, this);
@@ -486,7 +488,10 @@
 
     Gem.prototype.animationComplete = function() {
       this.object.position.z = 0;
-      return this.animating = false;
+      this.animating = false;
+      return this.dispatchEvent({
+        type: 'animationcomplete'
+      });
     };
 
     Gem.prototype.dropTo = function(y, delay, z, length) {
@@ -620,7 +625,7 @@
 
     return Gem;
 
-  })();
+  })(THREE.EventDispatcher);
 
   GemFactory = (function() {
     function GemFactory() {
@@ -699,7 +704,9 @@
 
   })();
 
-  Grid = (function() {
+  Grid = (function(superClass) {
+    extend(Grid, superClass);
+
     function Grid(w, h) {
       this.w = w;
       this.h = h;
@@ -899,15 +906,16 @@
 
     Grid.prototype.addGems = function() {
       var cell, j, len, ref, results, row;
+      this.ready = false;
       ref = this.cells;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         row = ref[j];
         results.push((function() {
-          var k, len1, results1;
+          var l, len1, results1;
           results1 = [];
-          for (k = 0, len1 = row.length; k < len1; k++) {
-            cell = row[k];
+          for (l = 0, len1 = row.length; l < len1; l++) {
+            cell = row[l];
             while (true) {
               cell.gem = GEMGAME.gem_factory.random();
               if (!cell.willClear()) {
@@ -917,6 +925,11 @@
             cell.gem.setX(cell.xPos());
             cell.gem.setY(this.h * 2);
             this.object.add(cell.gem.object);
+            cell.gem.addEventListener('animationcomplete', (function(_this) {
+              return function() {
+                return _this.gemDropped();
+              };
+            })(this));
             results1.push(cell.gem.dropTo(cell.yPos(), 1000 + cell.yPos() * 50 + cell.xPos() * 10, -cell.yPos()));
           }
           return results1;
@@ -937,14 +950,24 @@
       return board;
     };
 
+    Grid.prototype.gemDropped = function() {
+      if (this.ready || this.animating()) {
+        return;
+      }
+      this.ready = true;
+      return this.dispatchEvent({
+        type: 'ready'
+      });
+    };
+
     Grid.prototype.buildCells = function() {
       var j, ref, results, x, y;
       results = [];
       for (x = j = 0, ref = this.h; 0 <= ref ? j < ref : j > ref; x = 0 <= ref ? ++j : --j) {
         results.push((function() {
-          var k, ref1, results1;
+          var l, ref1, results1;
           results1 = [];
-          for (y = k = 0, ref1 = this.w; 0 <= ref1 ? k < ref1 : k > ref1; y = 0 <= ref1 ? ++k : --k) {
+          for (y = l = 0, ref1 = this.w; 0 <= ref1 ? l < ref1 : l > ref1; y = 0 <= ref1 ? ++l : --l) {
             results1.push(new Cell(x, y));
           }
           return results1;
@@ -966,7 +989,7 @@
 
     return Grid;
 
-  })();
+  })(THREE.EventDispatcher);
 
   window.GEMGAME = null;
 
@@ -1102,9 +1125,16 @@
       this.audio = new AudioManager(['sounds/woosh.mp3', 'sounds/pop.mp3']);
       this.roaming_light = new RoamingLight(GEMGAME.realWidth());
       this.grid = new Grid(this.grid_width, this.grid_height, this);
+      this.grid.addEventListener('ready', (function(_this) {
+        return function() {
+          return _this.gridReady();
+        };
+      })(this));
       this.menu = new Menu();
       this.background = new Background();
       this.progress_meter = new ProgressMeter();
+      this.timer = new Timer();
+      this.scene.add(this.timer.object);
       this.scene.add(this.progress_meter.object);
       this.scene.add(this.menu.object);
       this.scene.add(this.roaming_light.object);
@@ -1147,7 +1177,8 @@
     Main.prototype.showAbout = function() {
       var about;
       about = document.getElementById('about');
-      about.style.fontSize = (this.realWidth() / 25) + "px";
+      about.style.fontSize = (this.realWidth() / 23) + "px";
+      about.style.lineHeight = (this.realWidth() / 23 * 1.5) + "px";
       return about.className += ' show';
     };
 
@@ -1160,10 +1191,15 @@
     Main.prototype.renderLoop = function(t) {
       requestAnimationFrame(this.renderLoop);
       TWEEN.update(t);
-      GEMGAME.score.update(t);
+      this.score.update(t);
       this.roaming_light.update(t);
       this.grid.update(t);
+      this.timer.update(t);
       return this.renderer.render(this.scene, this.camera);
+    };
+
+    Main.prototype.gridReady = function() {
+      return this.timer.start();
     };
 
     Main.prototype.start = function() {
@@ -1171,7 +1207,9 @@
       this.grid.addGems();
       this.score.setGoal(100);
       this.progress_meter.show();
-      return this.progress_meter.setGoal(100);
+      this.progress_meter.setGoal(100);
+      this.timer.show();
+      return this.timer.setTime(60);
     };
 
     Main.prototype.goalReached = function(e) {
@@ -1208,12 +1246,6 @@
             color: 'green',
             exec: function() {
               return GEMGAME.start();
-            }
-          }, {
-            label: 'Config',
-            color: 'yellow',
-            exec: function() {
-              return GEMGAME.menu.open('main');
             }
           }, {
             label: 'About',
@@ -1256,7 +1288,7 @@
     };
 
     Menu.prototype.open = function(menu) {
-      var i, item, j, k, len, len1, ref, ref1, results;
+      var i, item, j, l, len, len1, ref, ref1, results;
       this.current = this.menu[menu];
       ref = this.current;
       for (i = j = 0, len = ref.length; j < len; i = ++j) {
@@ -1267,8 +1299,8 @@
       }
       ref1 = this.current;
       results = [];
-      for (k = 0, len1 = ref1.length; k < len1; k++) {
-        item = ref1[k];
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        item = ref1[l];
         item.object.scale.x = 1;
         item.object.scale.y = 1;
         item.object.position.x = this.center(item.width);
@@ -1317,7 +1349,7 @@
       }
       os = 1.15;
       object = new THREE.Object3D();
-      geom = new THREE.TextGeometry(letter, this.fontcfg);
+      geom = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(letter, this.fontcfg));
       geom.computeBoundingBox();
       w = geom.boundingBox.max.x - geom.boundingBox.min.x;
       h = geom.boundingBox.max.y - geom.boundingBox.min.y;
@@ -1590,9 +1622,9 @@
       this.score += this.worth(cleared);
       this.cleared += cleared;
       this.updateChain();
-      this.scoreEvent();
+      this.dispatchEvent(this.scoreEvent());
       if (this.cleared >= this.goal) {
-        return this.goalEvent();
+        return this.dispatchEvent(this.goalEvent());
       }
     };
 
@@ -1601,27 +1633,27 @@
       this.cleared = 0;
       this.chain = 0;
       this.longest_chain = 0;
-      return this.scoreEvent();
+      return this.dispatchEvent(this.scoreEvent());
     };
 
     Score.prototype.scoreEvent = function() {
-      return this.dispatchEvent({
+      return {
         type: 'scorechange',
         score: this.score,
         cleared: this.cleared,
         chain: this.chain,
         goal: this.goal
-      });
+      };
     };
 
     Score.prototype.goalEvent = function() {
-      return this.dispatchEvent({
+      return {
         type: 'goalreached',
         score: this.score,
         cleared: this.cleared,
         chain: this.chain,
         goal: this.goal
-      });
+      };
     };
 
     Score.prototype.timeToUpdate = function(t) {
@@ -1644,59 +1676,221 @@
   })(THREE.EventDispatcher);
 
   Timer = (function() {
-    function Timer(length, scale, w) {
-      this.started = false;
-      this.scale = scale;
-      this.length = length;
-      this.warning_seconds = 15;
-      this.danger_seconds = 5;
-      this.w = w;
+    function Timer() {
+      this.showTweenTick = bind(this.showTweenTick, this);
+      this.time = 0;
+      this.start_time = null;
+      this.fontcfg = {
+        size: this.height() * 0.5,
+        height: 10,
+        curveSegments: 3,
+        font: "droid sans",
+        weight: "normal",
+        style: "normal",
+        bevelThickness: 10,
+        bevelSize: 5,
+        bevelEnabled: true,
+        extrudeMaterial: 1
+      };
+      this.material = new THREE.MeshPhongMaterial({
+        color: 'yellow',
+        ambient: 'yellow',
+        shininess: 60
+      });
+      this.outline_material = new THREE.MeshBasicMaterial({
+        color: 'black',
+        side: THREE.BackSide
+      });
+      this.digits = [this.buildDigits(), this.buildDigits()];
       this.buildObject();
     }
 
+    Timer.prototype.width = function() {
+      return GEMGAME.realWidth() / 2.5;
+    };
+
+    Timer.prototype.height = function() {
+      return this.width() / 1.5;
+    };
+
+    Timer.prototype.digitColor = function() {
+      switch (false) {
+        case !(this.remaining() > 30):
+          return 'green';
+        case !(this.remaining() > 5):
+          return 'yellow';
+        default:
+          return 'red';
+      }
+    };
+
+    Timer.prototype.updateClock = function() {
+      var d, digit, i, j, k, len, ref, ref1, results;
+      ref = this.remainingDigits();
+      results = [];
+      for (i = j = 0, len = ref.length; j < len; i = ++j) {
+        digit = ref[i];
+        ref1 = this.digits[i];
+        for (k in ref1) {
+          d = ref1[k];
+          d.visible = false;
+        }
+        this.digits[i][digit].visible = true;
+        this.digits[i][digit].children[0].material.color.setStyle(this.digitColor());
+        results.push(this.digits[i][digit].children[0].material.ambient.setStyle(this.digitColor()));
+      }
+      return results;
+    };
+
+    Timer.prototype.buildDigits = function() {
+      var d, digits, j;
+      digits = {};
+      for (d = j = 0; j <= 9; d = ++j) {
+        digits[d] = this.buildDigit(d);
+      }
+      return digits;
+    };
+
+    Timer.prototype.buildDigit = function(d) {
+      var geom, h, hd, mesh, object, os, outline_mesh, w, wd;
+      os = 1.125;
+      object = new THREE.Object3D();
+      geom = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(d, this.fontcfg));
+      geom.computeBoundingBox();
+      w = geom.boundingBox.max.x - geom.boundingBox.min.x;
+      h = geom.boundingBox.max.y - geom.boundingBox.min.y;
+      wd = w * os - w;
+      hd = h * os - h;
+      mesh = new THREE.Mesh(geom, this.material);
+      mesh.position.x = wd / 2;
+      mesh.position.y = hd / 2;
+      mesh.position.z = 50;
+      outline_mesh = new THREE.Mesh(geom, this.outline_material);
+      outline_mesh.position.z = 25;
+      outline_mesh.scale.multiplyScalar(os);
+      outline_mesh.geometry.computeBoundingBox();
+      object.add(mesh);
+      object.add(outline_mesh);
+      object.visible = false;
+      object.position.x = -w / 2;
+      object.position.y = -h / 2;
+      return object;
+    };
+
     Timer.prototype.buildObject = function() {
-      var geometry, material;
+      var backdrop, cell, digit, i, k;
       this.object = new THREE.Object3D();
-      this.object.scale.x = this.scale;
-      this.object.scale.y = this.scale;
-      this.object.scale.z = this.scale;
-      this.object.position.x = this.w / 2 * this.scale;
-      this.object.position.y = 0.5 * this.scale;
-      this.object.rotation.z = Math.PI / 2;
-      geometry = new THREE.CylinderGeometry(0.25, 0.25, this.w - 0.5, 4);
-      material = new THREE.MeshPhongMaterial({
-        color: 'teal',
-        ambient: 'teal',
-        shininess: 60
+      backdrop = this.buildBackdrop();
+      this.object.add(backdrop);
+      this.cells = (function() {
+        var j, ref, results;
+        results = [];
+        for (i = j = 0; j <= 1; i = ++j) {
+          cell = this.buildCell();
+          cell.position.x = -this.width() / 4 + this.width() / 2 * i;
+          ref = this.digits[i];
+          for (k in ref) {
+            digit = ref[k];
+            cell.add(digit);
+          }
+          this.object.add(cell);
+          results.push(cell);
+        }
+        return results;
+      }).call(this);
+      this.object.position.z = -90000;
+      this.object.position.x = this.hiddenX();
+      return this.object.position.y = GEMGAME.realWidth() + this.height() / 2 + GEMGAME.realWidth() / 8 * 1.125;
+    };
+
+    Timer.prototype.hiddenX = function() {
+      return GEMGAME.realWidth() + this.width() / 2;
+    };
+
+    Timer.prototype.shownX = function() {
+      return GEMGAME.realWidth() - this.width() / 2 * 1.125;
+    };
+
+    Timer.prototype.buildCell = function() {
+      var geom, mat, mesh, object;
+      object = new THREE.Object3D();
+      mat = new THREE.MeshBasicMaterial({
+        color: 'grey',
+        transparent: true,
+        opacity: 0.5
       });
-      return this.cylinder = new THREE.Mesh(geometry, material);
+      geom = new THREE.PlaneBufferGeometry(this.width() / 2 * 0.875, this.height() * 0.875);
+      mesh = new THREE.Mesh(geom, mat);
+      object.add(mesh);
+      return object;
+    };
+
+    Timer.prototype.buildBackdrop = function() {
+      var geom, mat;
+      mat = new THREE.MeshBasicMaterial({
+        color: 'grey',
+        transparent: true,
+        opacity: 0.2
+      });
+      geom = new THREE.PlaneBufferGeometry(this.width(), this.height());
+      return new THREE.Mesh(geom, mat);
     };
 
     Timer.prototype.start = function() {
-      return this.started = true;
+      this.start_time = this.updated_at;
+      return this.last_remaining = -1;
+    };
+
+    Timer.prototype.elapsed = function() {
+      return Math.floor((this.updated_at - this.start_time) / 1000);
+    };
+
+    Timer.prototype.remaining = function() {
+      return this.time - this.elapsed();
+    };
+
+    Timer.prototype.remainingDigits = function() {
+      var r;
+      r = this.remaining().toString().split('');
+      if (r.length === 1) {
+        return ['0', r[0]];
+      } else {
+        return r;
+      }
+    };
+
+    Timer.prototype.show = function() {
+      return this.object.position.x = this.shownX();
+    };
+
+    Timer.prototype.show = function() {
+      var to, tween;
+      this.show_tween = {
+        x: this.hiddenX()
+      };
+      to = {
+        x: this.shownX()
+      };
+      tween = new TWEEN.Tween(this.show_tween).to(to, 1000).easing(TWEEN.Easing.Linear.None).onUpdate(this.showTweenTick);
+      return tween.start();
+    };
+
+    Timer.prototype.showTweenTick = function() {
+      return this.object.position.x = this.show_tween.x;
+    };
+
+    Timer.prototype.setTime = function(time) {
+      return this.time = time;
     };
 
     Timer.prototype.update = function(t) {
-      var elapsed, perc, remaining;
-      if (!this.started) {
+      this.updated_at = t;
+      if (this.start_time === null) {
         return;
       }
-      if (this.start_time == null) {
-        this.start_time = t;
-      }
-      elapsed = (t - this.start_time) / 1000;
-      remaining = this.length - elapsed;
-      if (remaining < this.danger_seconds) {
-        this.cylinder.material.color.setStyle("red");
-        this.cylinder.material.ambient.setStyle("red");
-      } else if (remaining < this.warning_seconds) {
-        this.cylinder.material.color.setStyle("yellow");
-        this.cylinder.material.ambient.setStyle("yellow");
-      }
-      if (remaining >= 0) {
-        perc = remaining / this.length;
-        this.cylinder.scale.y = perc;
-        return this.cylinder.position.y = (this.w - 0.5) / 2 * (1 - perc);
+      if (this.last_remaining !== this.remaining() && this.remaining() >= 0) {
+        this.updateClock();
+        return this.last_remaining = this.remaining();
       }
     };
 

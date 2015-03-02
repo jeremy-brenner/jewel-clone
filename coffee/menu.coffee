@@ -19,11 +19,11 @@ class Menu
         color: 'green'
         exec: ->
           GEMGAME.start()
-      ,
-        label: 'Config'
-        color: 'yellow'
-        exec: ->
-          GEMGAME.menu.open('main')
+    #  ,
+    #    label: 'Config'
+    #    color: 'yellow'
+    #    exec: ->
+    #      GEMGAME.menu.open('main')
       , 
         label: 'About'
         color: 'teal'
@@ -91,7 +91,7 @@ class Menu
     return if letter is ' '
     os=1.15
     object = new THREE.Object3D()
-    geom = new THREE.TextGeometry letter, @fontcfg 
+    geom = new THREE.BufferGeometry().fromGeometry( new THREE.TextGeometry( letter, @fontcfg ))
     geom.computeBoundingBox()
     w=geom.boundingBox.max.x-geom.boundingBox.min.x
     h=geom.boundingBox.max.y-geom.boundingBox.min.y

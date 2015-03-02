@@ -14,10 +14,15 @@ class Main
     @audio = new AudioManager(['sounds/woosh.mp3','sounds/pop.mp3'])
     @roaming_light = new RoamingLight(GEMGAME.realWidth())   
     @grid = new Grid(@grid_width, @grid_height,@)
+    @grid.addEventListener 'ready', =>
+      @gridReady()
+
     @menu = new Menu()
     @background = new Background()
     @progress_meter = new ProgressMeter()
+    @timer = new Timer()
 
+    @scene.add( @timer.object )
     @scene.add( @progress_meter.object )
     @scene.add( @menu.object )
     @scene.add( @roaming_light.object )
@@ -58,7 +63,8 @@ class Main
 
   showAbout: ->
     about = document.getElementById('about')
-    about.style.fontSize = "#{@realWidth()/25}px"
+    about.style.fontSize = "#{@realWidth()/23}px"
+    about.style.lineHeight = "#{@realWidth()/23*1.5}px"
     about.className += ' show'
 
   closeAbout: (e) =>
@@ -69,10 +75,14 @@ class Main
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     TWEEN.update t
-    GEMGAME.score.update t
+    @score.update t
     @roaming_light.update t
     @grid.update t
+    @timer.update t
     @renderer.render( @scene, @camera )
+    
+  gridReady: ->
+    @timer.start()
     
   start: ->
     @grid.show()
@@ -80,6 +90,8 @@ class Main
     @score.setGoal(100)
     @progress_meter.show()
     @progress_meter.setGoal(100)
+    @timer.show()
+    @timer.setTime(60)
 
   goalReached: (e) =>
     @score.reset()

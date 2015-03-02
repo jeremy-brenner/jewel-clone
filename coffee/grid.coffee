@@ -1,4 +1,4 @@
-class Grid
+class Grid extends THREE.EventDispatcher
   constructor: (w,h) ->
     @w = w
     @h = h
@@ -104,6 +104,7 @@ class Grid
     GEMGAME.realWidth() / @w * i
 
   addGems: ->
+    @ready = false
     for row in @cells
       for cell in row
         loop
@@ -112,6 +113,8 @@ class Grid
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
+        cell.gem.addEventListener 'animationcomplete', =>
+          @gemDropped()
         cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 
   buildBoard: ->
@@ -120,6 +123,12 @@ class Grid
     for cell in @flatCells()
       board.add( cell.square )
     board
+
+  gemDropped: ->
+    return if @ready or @animating()
+    @ready = true
+    @dispatchEvent
+      type: 'ready'
 
   buildCells: ->
     for x in [0...@h]

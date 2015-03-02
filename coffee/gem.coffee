@@ -1,4 +1,4 @@
-class Gem
+class Gem extends THREE.EventDispatcher
   constructor: (def,id) ->
     @id = id
     @def = def
@@ -103,6 +103,8 @@ class Gem
   animationComplete: =>
     @object.position.z = 0
     @animating = false
+    @dispatchEvent
+      type: 'animationcomplete'
 
   dropTo: (y,delay,z,length=1250) ->
     @animating = true
