@@ -104,6 +104,9 @@ class Grid extends THREE.EventDispatcher
   boardScale: (i=1)->
     GEMGAME.realWidth() / @w * i
 
+  clear: ->
+    cell.gem = null for cell in @flatCells()
+
   addGems: ->
     @ready = false
     for row in @cells
@@ -142,14 +145,21 @@ class Grid extends THREE.EventDispatcher
     cell.show() for cell in @flatCells()
 
   dropGems: ->
-    @end = true 
     cell.gem.dropToDoom() for cell in @flatCells()
       
 
   complete: ->
-    @end = true
-    @addEventListener 'animationcomplete', =>
-      cell.gem.flyAway() for cell in @flatCells()
+    @addEventListener 'animationcomplete', @flyAway
+
+  flyAway: =>
+    @removeEventListener 'animationcomplete', @flyAway
+    cell.gem.flyAway() for cell in @flatCells()
+    @addEventListener 'animationcomplete', @levelComplete
+
+  levelComplete: =>
+    @removeEventListener 'animationcomplete', @levelComplete
+    @dispatchEvent
+      type: 'levelcomplete'
 
   shakeGems: ->
     cell.gem.shake() for cell in @flatCells()

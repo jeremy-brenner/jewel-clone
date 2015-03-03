@@ -16,6 +16,10 @@ class Main
     @grid = new Grid(@grid_width, @grid_height,@)
     @grid.addEventListener 'ready', =>
       @gridReady()
+    @grid.addEventListener 'levelcomplete', =>
+      @nextLevel()
+    @grid.addEventListener 'levelfailed', =>
+      @levelFailed()
 
     @menu = new Menu()
     @background = new Background()
@@ -92,10 +96,17 @@ class Main
   start: ->
     @grid.show()
     @grid.addGems()
-    @score.setGoal(10)
+    @score.setGoal(50)
     @progress_meter.show()
     @timer.show()
     @timer.setTime(60)
+
+  nextLevel: ->
+    @grid.clear()
+    @score.reset()
+    @score.setGoal(50)
+    @timer.setTime(60)     
+    @grid.addGems()
 
   goalReached: (e) =>
     @timer.stop()

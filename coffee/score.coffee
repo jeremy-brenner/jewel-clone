@@ -28,7 +28,6 @@ class Score extends THREE.EventDispatcher
       @dispatchEvent @goalEvent()
 
   reset: ->
-    @score = 0
     @cleared = 0
     @chain = 0
     @longest_chain = 0

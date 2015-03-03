@@ -662,6 +662,7 @@
 
     Gem.prototype.flyAway = function() {
       var a, dist, fly_time, fly_tween, fly_tween2, mult, to, vx, vy;
+      this.animating = true;
       fly_time = 2000;
       this.tween_data = {
         x: this.object.position.x,
@@ -679,7 +680,7 @@
         x: this.object.position.x + Math.sin(a) * GEMGAME.grid_height,
         y: this.object.position.y + Math.cos(a) * GEMGAME.grid_height
       };
-      fly_tween = new TWEEN.Tween(this.tween_data).to(to, fly_time).easing(TWEEN.Easing.Back.In).onUpdate(this.tweenTick);
+      fly_tween = new TWEEN.Tween(this.tween_data).to(to, fly_time).easing(TWEEN.Easing.Back.In).onUpdate(this.tweenTick).onComplete(this.animationComplete);
       fly_tween2 = new TWEEN.Tween(this.tween_data).to({
         s: 2,
         spin: 5
@@ -798,6 +799,8 @@
     extend(Grid, superClass);
 
     function Grid(w, h) {
+      this.levelComplete = bind(this.levelComplete, this);
+      this.flyAway = bind(this.flyAway, this);
       this.animationComplete = bind(this.animationComplete, this);
       this.w = w;
       this.h = h;
@@ -996,6 +999,17 @@
       return GEMGAME.realWidth() / this.w * i;
     };
 
+    Grid.prototype.clear = function() {
+      var cell, j, len, ref, results;
+      ref = this.flatCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        results.push(cell.gem = null);
+      }
+      return results;
+    };
+
     Grid.prototype.addGems = function() {
       var cell, j, len, ref, results, row;
       this.ready = false;
@@ -1082,7 +1096,6 @@
 
     Grid.prototype.dropGems = function() {
       var cell, j, len, ref, results;
-      this.end = true;
       ref = this.flatCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -1093,19 +1106,26 @@
     };
 
     Grid.prototype.complete = function() {
-      this.end = true;
-      return this.addEventListener('animationcomplete', (function(_this) {
-        return function() {
-          var cell, j, len, ref, results;
-          ref = _this.flatCells();
-          results = [];
-          for (j = 0, len = ref.length; j < len; j++) {
-            cell = ref[j];
-            results.push(cell.gem.flyAway());
-          }
-          return results;
-        };
-      })(this));
+      return this.addEventListener('animationcomplete', this.flyAway);
+    };
+
+    Grid.prototype.flyAway = function() {
+      var cell, j, len, ref;
+      this.removeEventListener('animationcomplete', this.flyAway);
+      ref = this.flatCells();
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        cell.gem.flyAway();
+      }
+      return this.addEventListener('animationcomplete', this.levelComplete);
+    };
+
+    Grid.prototype.levelComplete = function() {
+      console.log('levelcomplete1');
+      this.removeEventListener('animationcomplete', this.levelComplete);
+      return this.dispatchEvent({
+        type: 'levelcomplete'
+      });
     };
 
     Grid.prototype.shakeGems = function() {
@@ -1262,6 +1282,16 @@
           return _this.gridReady();
         };
       })(this));
+      this.grid.addEventListener('levelcomplete', (function(_this) {
+        return function() {
+          return _this.nextLevel();
+        };
+      })(this));
+      this.grid.addEventListener('levelfailed', (function(_this) {
+        return function() {
+          return _this.levelFailed();
+        };
+      })(this));
       this.menu = new Menu();
       this.background = new Background();
       this.progress_meter = new ProgressMeter();
@@ -1341,16 +1371,26 @@
     };
 
     Main.prototype.gridReady = function() {
+      console.log('gridready');
       return this.timer.start();
     };
 
     Main.prototype.start = function() {
       this.grid.show();
       this.grid.addGems();
-      this.score.setGoal(10);
+      this.score.setGoal(50);
       this.progress_meter.show();
       this.timer.show();
       return this.timer.setTime(60);
+    };
+
+    Main.prototype.nextLevel = function() {
+      console.log('nextlevel');
+      this.grid.clear();
+      this.score.reset();
+      this.score.setGoal(50);
+      this.timer.setTime(60);
+      return this.grid.addGems();
     };
 
     Main.prototype.goalReached = function(e) {
@@ -1776,7 +1816,6 @@
     };
 
     Score.prototype.reset = function() {
-      this.score = 0;
       this.cleared = 0;
       this.chain = 0;
       this.longest_chain = 0;

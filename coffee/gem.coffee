@@ -233,6 +233,7 @@ class Gem extends THREE.EventDispatcher
     a.chain b
 
   flyAway: ->
+    @animating = true
     fly_time = 2000
 
     @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0, spin: 0 }
@@ -252,7 +253,7 @@ class Gem extends THREE.EventDispatcher
                          .to( to, fly_time ) 
                          .easing( TWEEN.Easing.Back.In )
                          .onUpdate( @tweenTick )
-   
+                         .onComplete( @animationComplete )
     fly_tween2 = new TWEEN.Tween( @tween_data )
                          .to( { s: 2, spin: 5 }, fly_time ) 
                          .easing( TWEEN.Easing.Linear.None )
