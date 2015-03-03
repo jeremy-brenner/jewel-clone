@@ -1,18 +1,15 @@
 class ProgressMeter
   constructor: () ->
     @cleared = 0
+    @goal = 0
     @width = GEMGAME.realWidth()/8
     @length = GEMGAME.realWidth()-@width/2
     @buildObject()
     GEMGAME.score.addEventListener('scorechange', @scoreChange )
 
-  setGoal: (goal) ->
-    @goal = goal
-    @cleared = 0
-    @resizeBar()
-
   scoreChange: (e) =>
     @cleared = e.cleared
+    @goal = e.goal
     @resizeBar()
 
   perc: ->

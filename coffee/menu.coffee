@@ -85,8 +85,6 @@ class Menu
    
     item.object.position.y = i*@fontSize()*-2 + GEMGAME.realHeight()/2 + @current.length*@fontSize()/2
 
-
-    
   createLetter: (letter,mat) ->
     return if letter is ' '
     os=1.15

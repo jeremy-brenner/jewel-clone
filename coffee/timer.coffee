@@ -1,4 +1,4 @@
-class Timer
+class Timer extends THREE.EventDispatcher
   constructor: () ->
     @time = 0
     @start_time = null
@@ -33,9 +33,9 @@ class Timer
     @width()/1.5
 
   digitColor: ->
-    switch
-      when @remaining() > 30 then 'green'
-      when @remaining() > 5 then 'yellow'
+    switch @status()
+      when 'ok' then 'green'
+      when 'warning' then 'yellow'
       else 'red'
 
   updateClock: ->
@@ -121,6 +121,9 @@ class Timer
     @start_time = @updated_at
     @last_remaining = -1
 
+  stop: ->
+    @start_time = null
+
   elapsed: ->
     Math.floor( (@updated_at-@start_time)/1000 )
 
@@ -133,9 +136,6 @@ class Timer
       ['0',r[0]]
     else
       r
-
-  show: ->
-    @object.position.x = @shownX()
 
   show: ->
     @show_tween = { x: @hiddenX() }
@@ -153,9 +153,23 @@ class Timer
   setTime: (time) ->
     @time = time
 
+  status: ->
+    switch
+      when @remaining() > 30 then 'ok'
+      when @remaining() > 5 then 'warning'
+      when @remaining() > 0 then 'danger'
+      else 'end'
+
+  sendEvents: ->
+    return if @status() is 'ok'
+    @dispatchEvent
+      type: @status()
+
   update: (t) ->
     @updated_at = t
-    return if @start_time is null
+    return if @start_time is null 
     if @last_remaining isnt @remaining() and @remaining() >= 0
       @updateClock()
       @last_remaining = @remaining()
+      @sendEvents()
+ 

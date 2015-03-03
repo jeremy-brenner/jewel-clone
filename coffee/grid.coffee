@@ -49,6 +49,7 @@ class Grid extends THREE.EventDispatcher
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
+        cell.gem.addEventListener 'animationcomplete', @animationComplete
         cell.gem.dropTo cell.yPos(), 0, 0, 500
       else
         new_cell = @cells[cell.x][y]
@@ -60,7 +61,7 @@ class Grid extends THREE.EventDispatcher
           break  
 
   update: (t) ->
-    return if @animating()
+    return if @animating() or @end
     @clearDoomed()
     @fillHoles() while @emptyCells().length > 0
     if @dirtyCells().length > 0 
@@ -113,8 +114,7 @@ class Grid extends THREE.EventDispatcher
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         @object.add( cell.gem.object )
-        cell.gem.addEventListener 'animationcomplete', =>
-          @gemDropped()
+        cell.gem.addEventListener 'animationcomplete', @animationComplete   
         cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 
   buildBoard: ->
@@ -124,11 +124,14 @@ class Grid extends THREE.EventDispatcher
       board.add( cell.square )
     board
 
-  gemDropped: ->
-    return if @ready or @animating()
-    @ready = true
+  animationComplete: =>
+    return if @animating()
     @dispatchEvent
-      type: 'ready'
+      type: 'animationcomplete'
+    if not @ready 
+      @ready = true
+      @dispatchEvent
+        type: 'ready'      
 
   buildCells: ->
     for x in [0...@h]
@@ -137,3 +140,17 @@ class Grid extends THREE.EventDispatcher
 
   show: ->
     cell.show() for cell in @flatCells()
+
+  dropGems: ->
+    @end = true 
+    cell.gem.dropToDoom() for cell in @flatCells()
+      
+
+  complete: ->
+    @end = true
+    @addEventListener 'animationcomplete', =>
+      cell.gem.flyAway() for cell in @flatCells()
+
+  shakeGems: ->
+    cell.gem.shake() for cell in @flatCells()
+      

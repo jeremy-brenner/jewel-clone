@@ -21,6 +21,11 @@ class Main
     @background = new Background()
     @progress_meter = new ProgressMeter()
     @timer = new Timer()
+    @timer.addEventListener 'danger', =>
+      @timeDanger()
+
+    @timer.addEventListener 'end', =>
+      @timesUp()
 
     @scene.add( @timer.object )
     @scene.add( @progress_meter.object )
@@ -83,15 +88,21 @@ class Main
     
   gridReady: ->
     @timer.start()
-    
+
   start: ->
     @grid.show()
     @grid.addGems()
-    @score.setGoal(100)
+    @score.setGoal(10)
     @progress_meter.show()
-    @progress_meter.setGoal(100)
     @timer.show()
     @timer.setTime(60)
 
   goalReached: (e) =>
-    @score.reset()
+    @timer.stop()
+    @grid.complete()
+
+  timeDanger: ->
+    @grid.shakeGems()
+
+  timesUp: ->
+    @grid.dropGems()

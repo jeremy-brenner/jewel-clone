@@ -10,9 +10,10 @@ class Score extends THREE.EventDispatcher
 
   setGoal: (goal) ->
     @goal = goal
-
+    @dispatchEvent @scoreEvent()
+    
   worth: (cleared) ->
-    (cleared-2) * cleared * (@chain+1)
+    (cleared-2) * cleared * (@chain+1) * 100
 
   updateChain: ->
     @chain += 1

@@ -342,6 +342,8 @@
 
     function Gem(def, id) {
       this.tweenTick = bind(this.tweenTick, this);
+      this.shakeTweenTick = bind(this.shakeTweenTick, this);
+      this.shakeDone = bind(this.shakeDone, this);
       this.animationComplete = bind(this.animationComplete, this);
       this.hurlTweenComplete = bind(this.hurlTweenComplete, this);
       this.hurlTweenTick = bind(this.hurlTweenTick, this);
@@ -362,6 +364,7 @@
         return results;
       }).call(this);
       this.outline.scale.multiplyScalar(1.125);
+      this.outline.position.z = -0.05;
       this.animating = false;
       this.object.add(this.mesh);
       this.object.add(this.outline);
@@ -488,10 +491,64 @@
 
     Gem.prototype.animationComplete = function() {
       this.object.position.z = 0;
+      if (this.shake_data) {
+        this.updateShakeOrigin();
+      }
       this.animating = false;
       return this.dispatchEvent({
         type: 'animationcomplete'
       });
+    };
+
+    Gem.prototype.randomAngle = function() {
+      return Math.random() * Math.PI * 2;
+    };
+
+    Gem.prototype.shake = function() {
+      if (this.shake_data) {
+        return;
+      }
+      this.shake_data = {
+        original_x: this.object.position.x,
+        original_y: this.object.position.y,
+        x: this.object.position.x,
+        y: this.object.position.y
+      };
+      return this.doShake();
+    };
+
+    Gem.prototype.updateShakeOrigin = function() {
+      this.shake_tween.stop();
+      this.shake_data = null;
+      return this.shake();
+    };
+
+    Gem.prototype.doShake = function() {
+      var a, to;
+      a = this.randomAngle();
+      to = {
+        x: this.shake_data.original_x + Math.cos(a) / 32,
+        y: this.shake_data.original_y + Math.sin(a) / 32
+      };
+      this.shake_tween = new TWEEN.Tween(this.shake_data).to(to, 50).easing(TWEEN.Easing.Linear.None).onComplete(this.shakeDone).onUpdate(this.shakeTweenTick);
+      return this.shake_tween.start();
+    };
+
+    Gem.prototype.shakeDone = function() {
+      return this.doShake();
+    };
+
+    Gem.prototype.shakeTweenTick = function() {
+      if (this.animating) {
+        return;
+      }
+      this.object.position.x = this.shake_data.x;
+      return this.object.position.y = this.shake_data.y;
+    };
+
+    Gem.prototype.dropToDoom = function() {
+      this.addEventListener('animationcomplete', this.removeGem);
+      return this.dropTo(-5, Math.random() * 1000, this.object.position.y);
     };
 
     Gem.prototype.dropTo = function(y, delay, z, length) {
@@ -603,12 +660,45 @@
       return a.chain(b);
     };
 
+    Gem.prototype.flyAway = function() {
+      var a, dist, fly_time, fly_tween, fly_tween2, mult, to, vx, vy;
+      fly_time = 2000;
+      this.tween_data = {
+        x: this.object.position.x,
+        y: this.object.position.y,
+        s: 1,
+        z: 0,
+        spin: 0
+      };
+      vx = this.object.position.x - 4;
+      vy = this.object.position.y - 4;
+      dist = Math.sqrt(Math.pow(Math.abs(vx), 2) + Math.pow(Math.abs(vy), 2));
+      a = Math.atan2(vx, vy);
+      mult = dist / 5;
+      to = {
+        x: this.object.position.x + Math.sin(a) * GEMGAME.grid_height,
+        y: this.object.position.y + Math.cos(a) * GEMGAME.grid_height
+      };
+      fly_tween = new TWEEN.Tween(this.tween_data).to(to, fly_time).easing(TWEEN.Easing.Back.In).onUpdate(this.tweenTick);
+      fly_tween2 = new TWEEN.Tween(this.tween_data).to({
+        s: 2,
+        spin: 5
+      }, fly_time).easing(TWEEN.Easing.Linear.None);
+      fly_tween2.delay(mult * 4000).start();
+      return fly_tween.delay(mult * 4000).start();
+    };
+
     Gem.prototype.tweenTick = function() {
       this.object.position.x = this.tween_data.x;
       this.object.position.y = this.tween_data.y;
       this.object.position.z = this.tween_data.z;
       this.object.scale.x = this.tween_data.s;
-      return this.object.scale.y = this.tween_data.s;
+      this.object.scale.y = this.tween_data.s;
+      if (this.tween_data.spin) {
+        this.object.rotation.z = this.tween_data.spin;
+        this.object.rotation.x = this.tween_data.spin;
+        return this.object.rotation.y = this.tween_data.spin;
+      }
     };
 
     Gem.prototype.highlite = function(t) {
@@ -676,7 +766,7 @@
       var geom, r, rx, s;
       geom = this.jsonloader.parse(def).geometry;
       rx = new THREE.Matrix4().makeRotationX(Math.PI / 2);
-      s = new THREE.Matrix4().makeScale(scale, scale, scale);
+      s = new THREE.Matrix4().makeScale(scale, scale * 1.5, scale);
       r = new THREE.Matrix4().multiplyMatrices(rx, s);
       geom.applyMatrix(r);
       return new THREE.BufferGeometry().fromGeometry(geom);
@@ -708,6 +798,7 @@
     extend(Grid, superClass);
 
     function Grid(w, h) {
+      this.animationComplete = bind(this.animationComplete, this);
       this.w = w;
       this.h = h;
       this.margin = 0;
@@ -821,6 +912,7 @@
           cell.gem.setX(cell.xPos());
           cell.gem.setY(this.h * 2);
           this.object.add(cell.gem.object);
+          cell.gem.addEventListener('animationcomplete', this.animationComplete);
           results.push(cell.gem.dropTo(cell.yPos(), 0, 0, 500));
         } else {
           new_cell = this.cells[cell.x][y];
@@ -840,7 +932,7 @@
 
     Grid.prototype.update = function(t) {
       var current, ref;
-      if (this.animating()) {
+      if (this.animating() || this.end) {
         return;
       }
       this.clearDoomed();
@@ -925,11 +1017,7 @@
             cell.gem.setX(cell.xPos());
             cell.gem.setY(this.h * 2);
             this.object.add(cell.gem.object);
-            cell.gem.addEventListener('animationcomplete', (function(_this) {
-              return function() {
-                return _this.gemDropped();
-              };
-            })(this));
+            cell.gem.addEventListener('animationcomplete', this.animationComplete);
             results1.push(cell.gem.dropTo(cell.yPos(), 1000 + cell.yPos() * 50 + cell.xPos() * 10, -cell.yPos()));
           }
           return results1;
@@ -950,14 +1038,19 @@
       return board;
     };
 
-    Grid.prototype.gemDropped = function() {
-      if (this.ready || this.animating()) {
+    Grid.prototype.animationComplete = function() {
+      if (this.animating()) {
         return;
       }
-      this.ready = true;
-      return this.dispatchEvent({
-        type: 'ready'
+      this.dispatchEvent({
+        type: 'animationcomplete'
       });
+      if (!this.ready) {
+        this.ready = true;
+        return this.dispatchEvent({
+          type: 'ready'
+        });
+      }
     };
 
     Grid.prototype.buildCells = function() {
@@ -983,6 +1076,45 @@
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
         results.push(cell.show());
+      }
+      return results;
+    };
+
+    Grid.prototype.dropGems = function() {
+      var cell, j, len, ref, results;
+      this.end = true;
+      ref = this.flatCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        results.push(cell.gem.dropToDoom());
+      }
+      return results;
+    };
+
+    Grid.prototype.complete = function() {
+      this.end = true;
+      return this.addEventListener('animationcomplete', (function(_this) {
+        return function() {
+          var cell, j, len, ref, results;
+          ref = _this.flatCells();
+          results = [];
+          for (j = 0, len = ref.length; j < len; j++) {
+            cell = ref[j];
+            results.push(cell.gem.flyAway());
+          }
+          return results;
+        };
+      })(this));
+    };
+
+    Grid.prototype.shakeGems = function() {
+      var cell, j, len, ref, results;
+      ref = this.flatCells();
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        results.push(cell.gem.shake());
       }
       return results;
     };
@@ -1134,6 +1266,16 @@
       this.background = new Background();
       this.progress_meter = new ProgressMeter();
       this.timer = new Timer();
+      this.timer.addEventListener('danger', (function(_this) {
+        return function() {
+          return _this.timeDanger();
+        };
+      })(this));
+      this.timer.addEventListener('end', (function(_this) {
+        return function() {
+          return _this.timesUp();
+        };
+      })(this));
       this.scene.add(this.timer.object);
       this.scene.add(this.progress_meter.object);
       this.scene.add(this.menu.object);
@@ -1205,15 +1347,23 @@
     Main.prototype.start = function() {
       this.grid.show();
       this.grid.addGems();
-      this.score.setGoal(100);
+      this.score.setGoal(10);
       this.progress_meter.show();
-      this.progress_meter.setGoal(100);
       this.timer.show();
       return this.timer.setTime(60);
     };
 
     Main.prototype.goalReached = function(e) {
-      return this.score.reset();
+      this.timer.stop();
+      return this.grid.complete();
+    };
+
+    Main.prototype.timeDanger = function() {
+      return this.grid.shakeGems();
+    };
+
+    Main.prototype.timesUp = function() {
+      return this.grid.dropGems();
     };
 
     return Main;
@@ -1448,20 +1598,16 @@
       this.showTweenTick = bind(this.showTweenTick, this);
       this.scoreChange = bind(this.scoreChange, this);
       this.cleared = 0;
+      this.goal = 0;
       this.width = GEMGAME.realWidth() / 8;
       this.length = GEMGAME.realWidth() - this.width / 2;
       this.buildObject();
       GEMGAME.score.addEventListener('scorechange', this.scoreChange);
     }
 
-    ProgressMeter.prototype.setGoal = function(goal) {
-      this.goal = goal;
-      this.cleared = 0;
-      return this.resizeBar();
-    };
-
     ProgressMeter.prototype.scoreChange = function(e) {
       this.cleared = e.cleared;
+      this.goal = e.goal;
       return this.resizeBar();
     };
 
@@ -1606,11 +1752,12 @@
     }
 
     Score.prototype.setGoal = function(goal) {
-      return this.goal = goal;
+      this.goal = goal;
+      return this.dispatchEvent(this.scoreEvent());
     };
 
     Score.prototype.worth = function(cleared) {
-      return (cleared - 2) * cleared * (this.chain + 1);
+      return (cleared - 2) * cleared * (this.chain + 1) * 100;
     };
 
     Score.prototype.updateChain = function() {
@@ -1675,7 +1822,9 @@
 
   })(THREE.EventDispatcher);
 
-  Timer = (function() {
+  Timer = (function(superClass) {
+    extend(Timer, superClass);
+
     function Timer() {
       this.showTweenTick = bind(this.showTweenTick, this);
       this.time = 0;
@@ -1714,10 +1863,10 @@
     };
 
     Timer.prototype.digitColor = function() {
-      switch (false) {
-        case !(this.remaining() > 30):
+      switch (this.status()) {
+        case 'ok':
           return 'green';
-        case !(this.remaining() > 5):
+        case 'warning':
           return 'yellow';
         default:
           return 'red';
@@ -1841,6 +1990,10 @@
       return this.last_remaining = -1;
     };
 
+    Timer.prototype.stop = function() {
+      return this.start_time = null;
+    };
+
     Timer.prototype.elapsed = function() {
       return Math.floor((this.updated_at - this.start_time) / 1000);
     };
@@ -1857,10 +2010,6 @@
       } else {
         return r;
       }
-    };
-
-    Timer.prototype.show = function() {
-      return this.object.position.x = this.shownX();
     };
 
     Timer.prototype.show = function() {
@@ -1883,6 +2032,28 @@
       return this.time = time;
     };
 
+    Timer.prototype.status = function() {
+      switch (false) {
+        case !(this.remaining() > 30):
+          return 'ok';
+        case !(this.remaining() > 5):
+          return 'warning';
+        case !(this.remaining() > 0):
+          return 'danger';
+        default:
+          return 'end';
+      }
+    };
+
+    Timer.prototype.sendEvents = function() {
+      if (this.status() === 'ok') {
+        return;
+      }
+      return this.dispatchEvent({
+        type: this.status()
+      });
+    };
+
     Timer.prototype.update = function(t) {
       this.updated_at = t;
       if (this.start_time === null) {
@@ -1890,12 +2061,13 @@
       }
       if (this.last_remaining !== this.remaining() && this.remaining() >= 0) {
         this.updateClock();
-        return this.last_remaining = this.remaining();
+        this.last_remaining = this.remaining();
+        return this.sendEvents();
       }
     };
 
     return Timer;
 
-  })();
+  })(THREE.EventDispatcher);
 
 }).call(this);

@@ -9,7 +9,7 @@ class Gem extends THREE.EventDispatcher
     @chunks = ( @buildChunk() for i in [0..3] )
 
     @outline.scale.multiplyScalar(1.125)
-
+    @outline.position.z = -0.05
     @animating = false
     @object.add @mesh
     @object.add @outline
@@ -37,7 +37,7 @@ class Gem extends THREE.EventDispatcher
     @hurlChunks(delay)
 
   removeGem: ->
-    @object.remove @mesh
+    @object.remove @mesh    
     @object.remove @outline    
 
   hurlStart: =>
@@ -102,9 +102,53 @@ class Gem extends THREE.EventDispatcher
 
   animationComplete: =>
     @object.position.z = 0
+    @updateShakeOrigin() if @shake_data
     @animating = false
     @dispatchEvent
       type: 'animationcomplete'
+  
+  randomAngle: ->
+    Math.random()*Math.PI*2
+
+  shake: ->
+    return if @shake_data
+    @shake_data = 
+      original_x: @object.position.x
+      original_y: @object.position.y
+      x: @object.position.x
+      y: @object.position.y
+
+    @doShake()
+
+  updateShakeOrigin: ->
+    @shake_tween.stop()
+    @shake_data = null
+    @shake()
+
+  doShake: ->
+    a = @randomAngle()
+    to = 
+      x: @shake_data.original_x+Math.cos(a)/32
+      y: @shake_data.original_y+Math.sin(a)/32
+
+    @shake_tween = new TWEEN.Tween( @shake_data )
+              .to( to, 50 ) 
+              .easing( TWEEN.Easing.Linear.None )
+              .onComplete( @shakeDone )
+              .onUpdate( @shakeTweenTick )
+    @shake_tween.start()
+  
+  shakeDone: =>
+    @doShake()
+
+  shakeTweenTick: =>
+    return if @animating
+    @object.position.x = @shake_data.x
+    @object.position.y = @shake_data.y
+
+  dropToDoom: ->
+    @addEventListener 'animationcomplete', @removeGem
+    @dropTo -5, Math.random()*1000, @object.position.y
 
   dropTo: (y,delay,z,length=1250) ->
     @animating = true
@@ -188,12 +232,45 @@ class Gem extends THREE.EventDispatcher
     b.chain c
     a.chain b
 
+  flyAway: ->
+    fly_time = 2000
+
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0, spin: 0 }
+  
+    vx = @object.position.x-4
+    vy = @object.position.y-4
+    dist = Math.sqrt(Math.pow(Math.abs(vx),2)+Math.pow(Math.abs(vy),2))
+    a = Math.atan2(vx,vy)
+    
+    mult = dist/5
+    
+    to = 
+      x: @object.position.x + Math.sin(a) * GEMGAME.grid_height #* mult
+      y: @object.position.y + Math.cos(a) * GEMGAME.grid_height #* mult
+   
+    fly_tween = new TWEEN.Tween( @tween_data )
+                         .to( to, fly_time ) 
+                         .easing( TWEEN.Easing.Back.In )
+                         .onUpdate( @tweenTick )
+   
+    fly_tween2 = new TWEEN.Tween( @tween_data )
+                         .to( { s: 2, spin: 5 }, fly_time ) 
+                         .easing( TWEEN.Easing.Linear.None )
+                        
+
+    fly_tween2.delay((mult)*4000).start()
+    fly_tween.delay((mult)*4000).start()
+
   tweenTick: =>
     @object.position.x = @tween_data.x
     @object.position.y = @tween_data.y
     @object.position.z = @tween_data.z
     @object.scale.x = @tween_data.s
     @object.scale.y = @tween_data.s
+    if @tween_data.spin
+      @object.rotation.z = @tween_data.spin
+      @object.rotation.x = @tween_data.spin
+      @object.rotation.y = @tween_data.spin
 
   highlite: (t) ->
     @object.rotation.z = Math.PI*2-t/400%Math.PI*2
