@@ -17,7 +17,8 @@ class Menu
       main: [
         label: 'New Game'
         color: 'green'
-        exec: ->
+        exec: =>
+          @cascade.stop()
           GEMGAME.start()
     #  ,
     #    label: 'Config'
@@ -55,6 +56,11 @@ class Menu
     GEMGAME.realWidth()/2 - width/2
 
   open: (menu) ->
+    unless @cascade
+      @cascade ?= new GemCascade(25)
+      @object.add @cascade.object
+
+    @cascade.start()
     @current = @menu[menu]
     @createItem(item,i) for item,i in @current when not item.object
     for item in @current
@@ -62,6 +68,8 @@ class Menu
       item.object.scale.y = 1
       item.object.position.x = @center item.width
       @object.add item.object 
+    
+
 
   createItem: (item,i) ->
     mat = new THREE.MeshPhongMaterial

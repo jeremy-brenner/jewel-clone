@@ -105,7 +105,9 @@ class Grid extends THREE.EventDispatcher
     GEMGAME.realWidth() / @w * i
 
   clear: ->
-    cell.gem = null for cell in @flatCells()
+    for cell in @flatCells()
+      @object.remove( cell.gem.object )
+      cell.gem = null 
 
   addGems: ->
     @ready = false
@@ -157,6 +159,7 @@ class Grid extends THREE.EventDispatcher
     @addEventListener 'animationcomplete', @levelComplete
 
   levelComplete: =>
+    @clear()
     @removeEventListener 'animationcomplete', @levelComplete
     @dispatchEvent
       type: 'levelcomplete'

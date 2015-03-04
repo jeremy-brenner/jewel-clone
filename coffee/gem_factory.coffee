@@ -32,7 +32,7 @@ class GemFactory
   buildGeometry: (def,scale) ->
     geom = @jsonloader.parse( def ).geometry
     rx = new THREE.Matrix4().makeRotationX( Math.PI/2 )
-    s = new THREE.Matrix4().makeScale scale,scale*1.5,scale
+    s = new THREE.Matrix4().makeScale scale,scale*1.3,scale
     r = new THREE.Matrix4().multiplyMatrices rx, s
     geom.applyMatrix r
     new THREE.BufferGeometry().fromGeometry geom

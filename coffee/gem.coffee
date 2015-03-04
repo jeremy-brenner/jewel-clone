@@ -148,7 +148,7 @@ class Gem extends THREE.EventDispatcher
 
   dropToDoom: ->
     @addEventListener 'animationcomplete', @removeGem
-    @dropTo -5, Math.random()*1000, @object.position.y
+    @dropTo -5, Math.random()*1000, -@object.position.y
 
   dropTo: (y,delay,z,length=1250) ->
     @animating = true
@@ -158,6 +158,22 @@ class Gem extends THREE.EventDispatcher
              .easing( TWEEN.Easing.Bounce.Out )
              .onUpdate( @tweenTick )
     drop_tween.onComplete( @animationComplete ).delay(delay).start()
+
+  tumbleTo: (y,delay,z,length=1250) ->
+    @animating = true
+    @object.position.z = z
+    @tumble_data = { y: @object.position.y }
+    drop_tween = new TWEEN.Tween( @tumble_data )
+             .to( { y: y }, length ) 
+             .easing( TWEEN.Easing.Linear.None )
+             .onUpdate( @tumbleTweenTick )
+    drop_tween.onComplete( @animationComplete ).delay(delay).start()
+
+  tumbleTweenTick: =>
+    @object.position.y = @tumble_data.y
+    @object.rotation.x += 0.01
+    @object.rotation.y += 0.01
+    @object.rotation.z += 0.01
 
   doSwap: (x,y,real=true,front=true) ->
     @animating = true
@@ -246,8 +262,8 @@ class Gem extends THREE.EventDispatcher
     mult = dist/5
     
     to = 
-      x: @object.position.x + Math.sin(a) * GEMGAME.grid_height #* mult
-      y: @object.position.y + Math.cos(a) * GEMGAME.grid_height #* mult
+      x: @object.position.x + Math.sin(a) * GEMGAME.grid_height*1.5 
+      y: @object.position.y + Math.cos(a) * GEMGAME.grid_height*1.5 
    
     fly_tween = new TWEEN.Tween( @tween_data )
                          .to( to, fly_time ) 

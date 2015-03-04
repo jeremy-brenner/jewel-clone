@@ -102,7 +102,6 @@ class Main
     @timer.setTime(60)
 
   nextLevel: ->
-    @grid.clear()
     @score.reset()
     @score.setGoal(50)
     @timer.setTime(60)     
