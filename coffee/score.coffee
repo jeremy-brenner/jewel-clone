@@ -4,9 +4,9 @@ class Score extends THREE.EventDispatcher
     @cleared = 0
     @chain = 0
     @goal = 0
+    @level = 1
     @longest_chain = 0
     @last_updated = 0
-    @update_interval = 1000
 
   setGoal: (goal) ->
     @goal = goal
@@ -27,14 +27,15 @@ class Score extends THREE.EventDispatcher
     if @cleared >= @goal
       @dispatchEvent @goalEvent()
 
-  reset: ->
+  levelUp: ->
+    @level += 1
     @cleared = 0
     @chain = 0
-    @longest_chain = 0
     @dispatchEvent @scoreEvent()
 
   scoreEvent: ->
     type: 'scorechange'
+    level: @level
     score: @score
     cleared: @cleared
     chain: @chain    
@@ -42,23 +43,9 @@ class Score extends THREE.EventDispatcher
 
   goalEvent: ->
     type: 'goalreached'
+    level: @level
     score: @score
     cleared: @cleared
     chain: @chain  
     goal: @goal  
 
-
-  timeToUpdate: (t) ->
-    t-@last_updated > @update_interval
-
-  scoreText: ->
-    """
-      Cleared: #{@cleared}
-      Chain: #{@chain}
-      Longest Chain: #{@longest_chain}
-      Score: #{@score}
-    """
-
-  update: (t) ->
-    return unless @timeToUpdate(t)
-    document.getElementById('score').innerText = @scoreText()

@@ -27,10 +27,10 @@ class Timer extends THREE.EventDispatcher
     @buildObject()
 
   width: ->
-    GEMGAME.realWidth()/2.5
+    GEMGAME.realWidth()*0.4
 
   height: ->
-    @width()/1.5
+    GEMGAME.realWidth()*(4/15)
 
   digitColor: ->
     switch @status()

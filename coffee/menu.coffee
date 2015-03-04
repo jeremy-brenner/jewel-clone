@@ -57,7 +57,7 @@ class Menu
 
   open: (menu) ->
     unless @cascade
-      @cascade ?= new GemCascade(25)
+      @cascade ?= new GemCascade(20)
       @object.add @cascade.object
 
     @cascade.start()

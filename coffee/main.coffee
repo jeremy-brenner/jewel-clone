@@ -30,7 +30,9 @@ class Main
 
     @timer.addEventListener 'end', =>
       @timesUp()
-
+    
+    @score_board = new ScoreBoard()
+    @scene.add( @score_board.object )
     @scene.add( @timer.object )
     @scene.add( @progress_meter.object )
     @scene.add( @menu.object )
@@ -84,7 +86,6 @@ class Main
   renderLoop: (t) =>
     requestAnimationFrame @renderLoop 
     TWEEN.update t
-    @score.update t
     @roaming_light.update t
     @grid.update t
     @timer.update t
@@ -102,7 +103,7 @@ class Main
     @timer.setTime(60)
 
   nextLevel: ->
-    @score.reset()
+    @score.levelUp()
     @score.setGoal(50)
     @timer.setTime(60)     
     @grid.addGems()
