@@ -1475,7 +1475,8 @@
       this.score.setGoal(50);
       this.progress_meter.show();
       this.timer.show();
-      return this.timer.setTime(60);
+      this.timer.setTime(60);
+      return this.score_board.show();
     };
 
     Main.prototype.nextLevel = function() {
@@ -1882,6 +1883,7 @@
 
   ScoreBoard = (function() {
     function ScoreBoard() {
+      this.showTweenTick = bind(this.showTweenTick, this);
       this.scoreChange = bind(this.scoreChange, this);
       this.fontcfg = {
         size: this.fontSize(),
@@ -1922,10 +1924,18 @@
       return -this.height() / 2;
     };
 
+    ScoreBoard.prototype.hiddenX = function() {
+      return -this.width() / 2;
+    };
+
+    ScoreBoard.prototype.shownX = function() {
+      return this.width() / 2 * 1.125;
+    };
+
     ScoreBoard.prototype.buildObjects = function() {
       this.object = new THREE.Object3D();
       this.object.add(this.buildBackdrop());
-      this.object.position.x = this.width() / 2 * 1.125;
+      this.object.position.x = this.hiddenX();
       this.object.position.y = GEMGAME.realWidth() + this.height() / 2 + GEMGAME.realWidth() / 8 * 1.125;
       this.objects.score = new THREE.Object3D();
       this.objects.score.position.y = this.baseY() + this.fontSize() * 1.5;
@@ -1971,6 +1981,22 @@
       geom = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(num, this.fontcfg));
       this.meshes[type] = new THREE.Mesh(geom, this.material);
       return this.objects[type].add(this.meshes[type]);
+    };
+
+    ScoreBoard.prototype.show = function() {
+      var to, tween;
+      this.show_tween = {
+        x: this.hiddenX()
+      };
+      to = {
+        x: this.shownX()
+      };
+      tween = new TWEEN.Tween(this.show_tween).to(to, 1000).easing(TWEEN.Easing.Linear.None).onUpdate(this.showTweenTick);
+      return tween.start();
+    };
+
+    ScoreBoard.prototype.showTweenTick = function() {
+      return this.object.position.x = this.show_tween.x;
     };
 
     return ScoreBoard;

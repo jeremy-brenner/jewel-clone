@@ -101,6 +101,7 @@ class Main
     @progress_meter.show()
     @timer.show()
     @timer.setTime(60)
+    @score_board.show()
 
   nextLevel: ->
     @score.levelUp()

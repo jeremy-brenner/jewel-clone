@@ -36,10 +36,16 @@ class ScoreBoard
   baseY: ->
     -@height()/2
 
+  hiddenX: ->
+    -@width()/2
+
+  shownX: ->
+    @width()/2*1.125
+
   buildObjects: ->
     @object = new THREE.Object3D()
     @object.add @buildBackdrop()
-    @object.position.x = @width()/2*1.125
+    @object.position.x = @hiddenX()
     @object.position.y = GEMGAME.realWidth() + @height()/2 + GEMGAME.realWidth()/8*1.125
    
     @objects.score = new THREE.Object3D()
@@ -83,4 +89,14 @@ class ScoreBoard
     @meshes[type] = new THREE.Mesh( geom,@material )
     @objects[type].add @meshes[type]
 
+  show: ->
+    @show_tween = { x: @hiddenX() }
+    to =  { x: @shownX() }
+    tween = new TWEEN.Tween( @show_tween )
+                     .to( to, 1000 ) 
+                     .easing( TWEEN.Easing.Linear.None )
+                     .onUpdate( @showTweenTick )
+    tween.start()
 
+  showTweenTick: =>
+    @object.position.x = @show_tween.x
