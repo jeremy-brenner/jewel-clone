@@ -261,14 +261,19 @@ class Gem extends THREE.EventDispatcher
     @animating = true
     fly_time = 2000
 
-    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0, spin: 0 }
-  
+
     vx = @object.position.x-4
     vy = @object.position.y-4
+
+    spinz = Math.abs(vx)/vx
+    spiny = Math.abs(vy)/vy
+
     dist = Math.sqrt(Math.pow(Math.abs(vx),2)+Math.pow(Math.abs(vy),2))
     a = Math.atan2(vx,vy)
     
     mult = dist/5
+
+    @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0, spin: 0, spinz: spinz, spiny: spiny}
     
     to = 
       x: @object.position.x + Math.sin(a) * GEMGAME.grid_height*1.5 
@@ -294,9 +299,9 @@ class Gem extends THREE.EventDispatcher
     @object.scale.x = @tween_data.s
     @object.scale.y = @tween_data.s
     if @tween_data.spin
-      @object.rotation.z = @tween_data.spin
+      @object.rotation.z = @tween_data.spin*@tween_data.spinz
       @object.rotation.x = @tween_data.spin
-      @object.rotation.y = @tween_data.spin
+      @object.rotation.y = @tween_data.spin*@tween_data.spiny
 
   highlite: (t) ->
     @object.rotation.z = Math.PI*2-t/400%Math.PI*2

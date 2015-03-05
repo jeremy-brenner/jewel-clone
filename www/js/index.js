@@ -770,21 +770,25 @@
     };
 
     Gem.prototype.flyAway = function() {
-      var a, dist, fly_time, fly_tween, fly_tween2, mult, to, vx, vy;
+      var a, dist, fly_time, fly_tween, fly_tween2, mult, spiny, spinz, to, vx, vy;
       this.animating = true;
       fly_time = 2000;
+      vx = this.object.position.x - 4;
+      vy = this.object.position.y - 4;
+      spinz = Math.abs(vx) / vx;
+      spiny = Math.abs(vy) / vy;
+      dist = Math.sqrt(Math.pow(Math.abs(vx), 2) + Math.pow(Math.abs(vy), 2));
+      a = Math.atan2(vx, vy);
+      mult = dist / 5;
       this.tween_data = {
         x: this.object.position.x,
         y: this.object.position.y,
         s: 1,
         z: 0,
-        spin: 0
+        spin: 0,
+        spinz: spinz,
+        spiny: spiny
       };
-      vx = this.object.position.x - 4;
-      vy = this.object.position.y - 4;
-      dist = Math.sqrt(Math.pow(Math.abs(vx), 2) + Math.pow(Math.abs(vy), 2));
-      a = Math.atan2(vx, vy);
-      mult = dist / 5;
       to = {
         x: this.object.position.x + Math.sin(a) * GEMGAME.grid_height * 1.5,
         y: this.object.position.y + Math.cos(a) * GEMGAME.grid_height * 1.5
@@ -805,9 +809,9 @@
       this.object.scale.x = this.tween_data.s;
       this.object.scale.y = this.tween_data.s;
       if (this.tween_data.spin) {
-        this.object.rotation.z = this.tween_data.spin;
+        this.object.rotation.z = this.tween_data.spin * this.tween_data.spinz;
         this.object.rotation.x = this.tween_data.spin;
-        return this.object.rotation.y = this.tween_data.spin;
+        return this.object.rotation.y = this.tween_data.spin * this.tween_data.spiny;
       }
     };
 
