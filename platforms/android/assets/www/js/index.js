@@ -363,13 +363,13 @@
       this.object.add(gem.object);
       gem.addEventListener('animationcomplete', (function(_this) {
         return function() {
-          return _this.drop(gem);
+          return _this.dropLoop(gem);
         };
       })(this));
       return gem;
     };
 
-    GemCascade.prototype.drop = function(gem) {
+    GemCascade.prototype.dropLoop = function(gem) {
       var scale, time;
       if (!this.run) {
         return;
@@ -392,7 +392,7 @@
       ref = this.gems;
       for (j = 0, len = ref.length; j < len; j++) {
         gem = ref[j];
-        this.drop(gem);
+        this.dropLoop(gem);
       }
       return this.object.visible = true;
     };
@@ -1472,16 +1472,15 @@
     Main.prototype.start = function() {
       this.grid.show();
       this.grid.addGems();
-      this.score.setGoal(50);
       this.progress_meter.show();
       this.timer.show();
       this.timer.setTime(60);
+      this.score.levelUp();
       return this.score_board.show();
     };
 
     Main.prototype.nextLevel = function() {
       this.score.levelUp();
-      this.score.setGoal(50);
       this.timer.setTime(60);
       return this.grid.addGems();
     };
@@ -1902,10 +1901,6 @@
         ambient: 'yellow',
         shininess: 60
       });
-      this.outline_material = new THREE.MeshBasicMaterial({
-        color: 'black',
-        side: THREE.BackSide
-      });
       this.objects = {};
       this.meshes = {};
       this.buildObjects();
@@ -1933,19 +1928,27 @@
     };
 
     ScoreBoard.prototype.buildObjects = function() {
+      var i, j, label, label_geom, label_mesh, len, ref, results, text_label;
       this.object = new THREE.Object3D();
-      this.object.add(this.buildBackdrop());
+      this.buildBackdrop();
       this.object.position.x = this.hiddenX();
       this.object.position.y = GEMGAME.realWidth() + this.height() / 2 + GEMGAME.realWidth() / 8 * 1.125;
-      this.objects.score = new THREE.Object3D();
-      this.objects.score.position.y = this.baseY() + this.fontSize() * 1.5;
-      this.object.add(this.objects.score);
-      this.objects.cleared = new THREE.Object3D();
-      this.objects.cleared.position.y = this.baseY() + this.fontSize() * 1.5 * 2;
-      this.object.add(this.objects.cleared);
-      this.objects.level = new THREE.Object3D();
-      this.objects.level.position.y = this.baseY() + this.fontSize() * 1.5 * 3;
-      return this.object.add(this.objects.level);
+      ref = ['score', 'max_chain', 'cleared', 'level'];
+      results = [];
+      for (i = j = 0, len = ref.length; j < len; i = ++j) {
+        label = ref[i];
+        text_label = label.split('_').join(' ');
+        label_geom = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(text_label, this.fontcfg));
+        label_mesh = new THREE.Mesh(label_geom, this.material);
+        label_mesh.position.x = this.baseX() + this.fontSize() * 1.5;
+        label_mesh.position.y = this.baseY() + this.fontSize() * 1.5 * (i + 1);
+        this.object.add(label_mesh);
+        this.objects[label] = new THREE.Object3D();
+        this.objects[label].position.x = this.fontSize() * 1.5;
+        this.objects[label].position.y = this.baseY() + this.fontSize() * 1.5 * (i + 1);
+        results.push(this.object.add(this.objects[label]));
+      }
+      return results;
     };
 
     ScoreBoard.prototype.width = function() {
@@ -1961,15 +1964,23 @@
       mat = new THREE.MeshBasicMaterial({
         color: 'grey',
         transparent: true,
-        opacity: 0.7
+        opacity: 0.2
       });
       geom = new THREE.PlaneBufferGeometry(this.width(), this.height());
-      return new THREE.Mesh(geom, mat);
+      this.object.add(new THREE.Mesh(geom, mat));
+      mat = new THREE.MeshBasicMaterial({
+        color: 'grey',
+        transparent: true,
+        opacity: 0.5
+      });
+      geom = new THREE.PlaneBufferGeometry(this.width() * 0.9, this.height() * 0.9);
+      return this.object.add(new THREE.Mesh(geom, mat));
     };
 
     ScoreBoard.prototype.scoreChange = function(e) {
       this.updateNumber('score', e.score);
-      this.updateNumber('cleared', e.cleared);
+      this.updateNumber('max_chain', e.max_chain);
+      this.updateNumber('cleared', e.cleared + " / " + e.goal);
       return this.updateNumber('level', e.level);
     };
 
@@ -2010,16 +2021,10 @@
       this.score = 0;
       this.cleared = 0;
       this.chain = 0;
-      this.goal = 0;
-      this.level = 1;
-      this.longest_chain = 0;
+      this.level = 0;
+      this.max_chain = 0;
       this.last_updated = 0;
     }
-
-    Score.prototype.setGoal = function(goal) {
-      this.goal = goal;
-      return this.dispatchEvent(this.scoreEvent());
-    };
 
     Score.prototype.worth = function(cleared) {
       return (cleared - 2) * cleared * (this.chain + 1) * 100;
@@ -2027,7 +2032,7 @@
 
     Score.prototype.updateChain = function() {
       this.chain += 1;
-      return this.longest_chain = this.chain > this.longest_chain ? this.chain : this.longest_chain;
+      return this.max_chain = this.chain > this.max_chain ? this.chain : this.max_chain;
     };
 
     Score.prototype.add = function(cleared) {
@@ -2035,7 +2040,7 @@
       this.cleared += cleared;
       this.updateChain();
       this.dispatchEvent(this.scoreEvent());
-      if (this.cleared >= this.goal) {
+      if (this.cleared >= this.goal()) {
         return this.dispatchEvent(this.goalEvent());
       }
     };
@@ -2047,6 +2052,10 @@
       return this.dispatchEvent(this.scoreEvent());
     };
 
+    Score.prototype.goal = function() {
+      return 50 + (this.level - 1) * 5;
+    };
+
     Score.prototype.scoreEvent = function() {
       return {
         type: 'scorechange',
@@ -2054,7 +2063,8 @@
         score: this.score,
         cleared: this.cleared,
         chain: this.chain,
-        goal: this.goal
+        max_chain: this.max_chain,
+        goal: this.goal()
       };
     };
 
@@ -2065,7 +2075,8 @@
         score: this.score,
         cleared: this.cleared,
         chain: this.chain,
-        goal: this.goal
+        max_chain: this.max_chain,
+        goal: this.goal()
       };
     };
 

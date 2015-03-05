@@ -97,15 +97,14 @@ class Main
   start: ->
     @grid.show()
     @grid.addGems()
-    @score.setGoal(50)
     @progress_meter.show()
     @timer.show()
     @timer.setTime(60)
+    @score.levelUp()
     @score_board.show()
 
   nextLevel: ->
     @score.levelUp()
-    @score.setGoal(50)
     @timer.setTime(60)     
     @grid.addGems()
 

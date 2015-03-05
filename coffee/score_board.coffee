@@ -16,10 +16,6 @@ class ScoreBoard
       color: 'yellow'
       ambient: 'yellow'
       shininess: 60
-
-    @outline_material = new THREE.MeshBasicMaterial
-      color: 'black'  
-      side: THREE.BackSide 
   
     @objects = {}
     @meshes = {}
@@ -44,24 +40,24 @@ class ScoreBoard
 
   buildObjects: ->
     @object = new THREE.Object3D()
-    @object.add @buildBackdrop()
+    @buildBackdrop()
     @object.position.x = @hiddenX()
     @object.position.y = GEMGAME.realWidth() + @height()/2 + GEMGAME.realWidth()/8*1.125
-   
-    @objects.score = new THREE.Object3D()
-   # @objects.score.position.x = @baseX()
-    @objects.score.position.y = @baseY() + @fontSize()*1.5
-    @object.add @objects.score
-    
-    @objects.cleared = new THREE.Object3D()
-   # @objects.cleared.position.x = @baseX()
-    @objects.cleared.position.y = @baseY() + @fontSize()*1.5*2
-    @object.add @objects.cleared
 
-    @objects.level = new THREE.Object3D()
-  #  @objects.level.position.x = @baseX()
-    @objects.level.position.y = @baseY() + @fontSize()*1.5*3
-    @object.add @objects.level
+    for label,i in ['score','max_chain','cleared','level']
+      text_label = label.split('_').join(' ')
+      label_geom = new THREE.BufferGeometry().fromGeometry( new THREE.TextGeometry( text_label, @fontcfg ))
+      label_mesh = new THREE.Mesh( label_geom,@material )
+      label_mesh.position.x = @baseX() + @fontSize()*1.5
+      label_mesh.position.y = @baseY() + @fontSize()*1.5*(i+1)
+      @object.add label_mesh
+
+      @objects[label] = new THREE.Object3D()
+      @objects[label].position.x = @fontSize()*1.5
+      @objects[label].position.y = @baseY() + @fontSize()*1.5*(i+1)
+      @object.add @objects[label]
+
+  
 
   width: ->
     GEMGAME.realWidth()*0.5
@@ -73,14 +69,23 @@ class ScoreBoard
     mat = new THREE.MeshBasicMaterial
       color: 'grey'
       transparent: true
-      opacity: 0.7
+      opacity: 0.2
 
     geom = new THREE.PlaneBufferGeometry @width(), @height()
-    new THREE.Mesh( geom, mat )  
+    @object.add new THREE.Mesh( geom, mat )  
+
+    mat = new THREE.MeshBasicMaterial
+      color: 'grey'
+      transparent: true
+      opacity: 0.5
+
+    geom = new THREE.PlaneBufferGeometry @width()*0.9, @height()*0.9
+    @object.add new THREE.Mesh( geom, mat )  
 
   scoreChange: (e) =>
     @updateNumber 'score', e.score 
-    @updateNumber 'cleared', e.cleared
+    @updateNumber 'max_chain', e.max_chain
+    @updateNumber 'cleared', "#{e.cleared} / #{e.goal}"
     @updateNumber 'level', e.level
 
   updateNumber: (type,num) ->
