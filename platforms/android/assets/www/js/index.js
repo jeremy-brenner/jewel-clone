@@ -1930,6 +1930,7 @@
     ScoreBoard.prototype.buildObjects = function() {
       var i, j, label, label_geom, label_mesh, len, ref, results, text_label;
       this.object = new THREE.Object3D();
+      this.object.position.z = -90000;
       this.buildBackdrop();
       this.object.position.x = this.hiddenX();
       this.object.position.y = GEMGAME.realWidth() + this.height() / 2 + GEMGAME.realWidth() / 8 * 1.125;

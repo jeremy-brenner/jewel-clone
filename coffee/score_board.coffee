@@ -40,6 +40,7 @@ class ScoreBoard
 
   buildObjects: ->
     @object = new THREE.Object3D()
+    @object.position.z = -90000
     @buildBackdrop()
     @object.position.x = @hiddenX()
     @object.position.y = GEMGAME.realWidth() + @height()/2 + GEMGAME.realWidth()/8*1.125
