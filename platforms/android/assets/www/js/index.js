@@ -464,6 +464,8 @@
       object.add(outline);
       object.rotation.set(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
       object.position.z = -1;
+      object.visible = false;
+      this.object.add(object);
       return object;
     };
 
@@ -475,19 +477,24 @@
       ref = this.chunks;
       for (j = 0, len = ref.length; j < len; j++) {
         chunk = ref[j];
-        this.object.add(chunk);
+        chunk.visible = true;
       }
       return this.hurlChunks(delay);
     };
 
-    Gem.prototype.removeGem = function() {
-      this.object.remove(this.mesh);
-      return this.object.remove(this.outline);
+    Gem.prototype.show = function() {
+      this.mesh.visible = true;
+      return this.outline.visible = true;
+    };
+
+    Gem.prototype.hide = function() {
+      this.mesh.visible = false;
+      return this.outline.visible = false;
     };
 
     Gem.prototype.hurlStart = function() {
       var chunk, j, len, ref;
-      this.removeGem();
+      this.hide();
       ref = this.chunks;
       for (j = 0, len = ref.length; j < len; j++) {
         chunk = ref[j];
@@ -561,7 +568,11 @@
     };
 
     Gem.prototype.hurlTweenComplete = function() {
-      return GEMGAME.grid.object.remove(this.object);
+      return this.removeGem();
+    };
+
+    Gem.prototype.removeGem = function() {
+      return this.object.parent.remove(this.object);
     };
 
     Gem.prototype.animationComplete = function() {
@@ -622,7 +633,7 @@
     };
 
     Gem.prototype.dropToDoom = function() {
-      this.addEventListener('animationcomplete', this.removeGem);
+      this.addEventListener('animationcomplete', this.hide);
       return this.dropTo(-5, Math.random() * 1000, -this.object.position.y);
     };
 
@@ -828,6 +839,7 @@
       });
       this.gemid = 0;
       this.loadGems();
+      this.prebuilt = [];
     }
 
     GemFactory.prototype.loadGems = function() {
@@ -884,7 +896,19 @@
     };
 
     GemFactory.prototype.random = function() {
-      return this.buildGem(this.defs[Math.floor(Math.random() * this.defs.length)]);
+      return this.prebuilt.shift() || this.buildGem(this.defs[Math.floor(Math.random() * this.defs.length)]);
+    };
+
+    GemFactory.prototype.prebuild = function(n) {
+      var i;
+      return this.prebuilt = (function() {
+        var j, ref, results;
+        results = [];
+        for (i = j = 0, ref = n; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+          results.push(this.random());
+        }
+        return results;
+      }).call(this);
     };
 
     GemFactory.prototype.onload = function() {};
@@ -1012,8 +1036,8 @@
           cell.gem = GEMGAME.gem_factory.random();
           cell.gem.setX(cell.xPos());
           cell.gem.setY(this.h * 2);
-          this.object.add(cell.gem.object);
           cell.gem.addEventListener('animationcomplete', this.animationComplete);
+          cell.gem.show();
           results.push(cell.gem.dropTo(cell.yPos(), 0, 0, 500));
         } else {
           new_cell = this.cells[cell.x][y];
@@ -1110,17 +1134,24 @@
     };
 
     Grid.prototype.addGems = function() {
-      var cell, j, len, ref, results, row;
+      var cell, gem, j, l, len, len1, ref, ref1, results, row;
       this.ready = false;
-      ref = this.cells;
-      results = [];
+      GEMGAME.gem_factory.prebuild(this.w * this.h * 2);
+      ref = GEMGAME.gem_factory.prebuilt;
       for (j = 0, len = ref.length; j < len; j++) {
-        row = ref[j];
+        gem = ref[j];
+        this.object.add(gem.object);
+        gem.hide();
+      }
+      ref1 = this.cells;
+      results = [];
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        row = ref1[l];
         results.push((function() {
-          var l, len1, results1;
+          var len2, o, results1;
           results1 = [];
-          for (l = 0, len1 = row.length; l < len1; l++) {
-            cell = row[l];
+          for (o = 0, len2 = row.length; o < len2; o++) {
+            cell = row[o];
             while (true) {
               cell.gem = GEMGAME.gem_factory.random();
               if (!cell.willClear()) {
@@ -1129,8 +1160,8 @@
             }
             cell.gem.setX(cell.xPos());
             cell.gem.setY(this.h * 2);
-            this.object.add(cell.gem.object);
             cell.gem.addEventListener('animationcomplete', this.animationComplete);
+            cell.gem.show();
             results1.push(cell.gem.dropTo(cell.yPos(), 1000 + cell.yPos() * 50 + cell.xPos() * 10, -cell.yPos()));
           }
           return results1;
@@ -1901,6 +1932,7 @@
         bevelEnabled: true,
         extrudeMaterial: 1
       };
+      this.buffer_font = new THREE.FontBufferGeometry(this.fontcfg, '0123456789/');
       this.material = new THREE.MeshPhongMaterial({
         color: 'yellow',
         ambient: 'yellow',
@@ -1991,12 +2023,10 @@
     };
 
     ScoreBoard.prototype.updateNumber = function(type, num) {
-      var geom;
       if (this.meshes[type]) {
         this.objects[type].remove(this.meshes[type]);
       }
-      geom = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(num, this.fontcfg));
-      this.meshes[type] = new THREE.Mesh(geom, this.material);
+      this.meshes[type] = this.buffer_font.buildMesh(num.toString(), this.material);
       return this.objects[type].add(this.meshes[type]);
     };
 
@@ -2089,6 +2119,57 @@
     return Score;
 
   })(THREE.EventDispatcher);
+
+  THREE.FontBufferGeometry = (function() {
+    function FontBufferGeometry(parameters, charset) {
+      if (charset == null) {
+        charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      }
+      this.parameters = parameters;
+      this.geometries = this.buildGeometries(charset.split(''));
+    }
+
+    FontBufferGeometry.prototype.buildGeometries = function(chararray) {
+      var char, h, j, len;
+      h = {};
+      for (j = 0, len = chararray.length; j < len; j++) {
+        char = chararray[j];
+        h[char] = this.buildGeometry(char);
+      }
+      return h;
+    };
+
+    FontBufferGeometry.prototype.buildGeometry = function(c) {
+      var object;
+      object = {};
+      object.geometry = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(c, this.parameters));
+      object.geometry.computeBoundingBox();
+      object.width = object.geometry.boundingBox.max.x - object.geometry.boundingBox.min.x;
+      return object;
+    };
+
+    FontBufferGeometry.prototype.buildMesh = function(string, mat) {
+      var c, j, len, letter, mesh, pos, ref;
+      mesh = new THREE.Object3D();
+      pos = 0;
+      ref = string.split('');
+      for (j = 0, len = ref.length; j < len; j++) {
+        c = ref[j];
+        if (this.geometries[c]) {
+          letter = new THREE.Mesh(this.geometries[c].geometry, mat);
+          letter.position.x = pos;
+          pos += this.geometries[c].width;
+          mesh.add(letter);
+        } else {
+          pos += this.parameters.height / 2;
+        }
+      }
+      return mesh;
+    };
+
+    return FontBufferGeometry;
+
+  })();
 
   Timer = (function(superClass) {
     extend(Timer, superClass);

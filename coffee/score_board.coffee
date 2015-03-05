@@ -12,6 +12,8 @@ class ScoreBoard
       bevelEnabled: true
       extrudeMaterial: 1
 
+    @buffer_font = new THREE.FontBufferGeometry(@fontcfg,'0123456789/')
+
     @material = new THREE.MeshPhongMaterial
       color: 'yellow'
       ambient: 'yellow'
@@ -91,8 +93,7 @@ class ScoreBoard
 
   updateNumber: (type,num) ->
     @objects[type].remove( @meshes[type] ) if @meshes[type]
-    geom = new THREE.BufferGeometry().fromGeometry( new THREE.TextGeometry( num, @fontcfg ))
-    @meshes[type] = new THREE.Mesh( geom,@material )
+    @meshes[type] =  @buffer_font.buildMesh( num.toString(), @material )
     @objects[type].add @meshes[type]
 
   show: ->

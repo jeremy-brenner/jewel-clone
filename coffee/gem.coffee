@@ -30,18 +30,24 @@ class Gem extends THREE.EventDispatcher
     object.add outline
     object.rotation.set Math.PI*2*Math.random(), Math.PI*2*Math.random(), Math.PI*2*Math.random()
     object.position.z = -1
+    object.visible = false
+    @object.add object
     object 
 
   explode: (delay=0) ->
-    @object.add(chunk) for chunk in @chunks
+    chunk.visible = true for chunk in @chunks
     @hurlChunks(delay)
 
-  removeGem: ->
-    @object.remove @mesh    
-    @object.remove @outline    
+  show: ->
+    @mesh.visible = true
+    @outline.visible = true    
+
+  hide: ->
+    @mesh.visible = false 
+    @outline.visible = false
 
   hurlStart: =>
-    @removeGem()
+    @hide()
     chunk.position.z = 1 for chunk in @chunks
     GEMGAME.audio.play('pop')
 
@@ -98,7 +104,10 @@ class Gem extends THREE.EventDispatcher
       @chunks[i].scale.z = @hurl_tween.s
 
   hurlTweenComplete: =>
-    GEMGAME.grid.object.remove( @object )
+    @removeGem()
+
+  removeGem: ->
+    @object.parent.remove @object
 
   animationComplete: =>
     @object.position.z = 0
@@ -147,7 +156,7 @@ class Gem extends THREE.EventDispatcher
     @object.position.y = @shake_data.y
 
   dropToDoom: ->
-    @addEventListener 'animationcomplete', @removeGem
+    @addEventListener 'animationcomplete', @hide
     @dropTo -5, Math.random()*1000, -@object.position.y
 
   dropTo: (y,delay,z,length=1250) ->

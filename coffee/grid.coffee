@@ -48,8 +48,8 @@ class Grid extends THREE.EventDispatcher
         cell.gem = GEMGAME.gem_factory.random()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
-        @object.add( cell.gem.object )
         cell.gem.addEventListener 'animationcomplete', @animationComplete
+        cell.gem.show()
         cell.gem.dropTo cell.yPos(), 0, 0, 500
       else
         new_cell = @cells[cell.x][y]
@@ -111,6 +111,10 @@ class Grid extends THREE.EventDispatcher
 
   addGems: ->
     @ready = false
+    GEMGAME.gem_factory.prebuild( @w*@h*2 )
+    for gem in GEMGAME.gem_factory.prebuilt
+      @object.add( gem.object )
+      gem.hide()
     for row in @cells
       for cell in row
         loop
@@ -118,8 +122,8 @@ class Grid extends THREE.EventDispatcher
           break unless cell.willClear()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
-        @object.add( cell.gem.object )
         cell.gem.addEventListener 'animationcomplete', @animationComplete   
+        cell.gem.show()
         cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 
   buildBoard: ->
