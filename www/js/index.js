@@ -370,10 +370,16 @@
     };
 
     GemCascade.prototype.dropLoop = function(gem) {
-      var scale, time;
-      if (!this.run) {
-        return;
+      if (this.run) {
+        return this.animate(gem);
+      } else {
+        console.log('removing');
+        return this.object.remove(gem.object);
       }
+    };
+
+    GemCascade.prototype.animate = function(gem) {
+      var scale, time;
       scale = Math.random();
       time = 3000 + 5000 * (1 - scale);
       gem.setX(8 * Math.random());
@@ -398,7 +404,6 @@
     };
 
     GemCascade.prototype.stop = function() {
-      this.object.visible = false;
       return this.run = false;
     };
 

@@ -19,7 +19,12 @@ class GemCascade
     gem
 
   dropLoop: (gem) ->
-    return unless @run
+    if @run
+      @animate(gem)
+    else
+      @object.remove gem.object
+  
+  animate: (gem) ->
     scale = Math.random()
     time = 3000+5000*(1-scale)
     gem.setX( 8*Math.random() )
