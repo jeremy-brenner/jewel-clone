@@ -373,7 +373,6 @@
       if (this.run) {
         return this.animate(gem);
       } else {
-        console.log('removing');
         return this.object.remove(gem.object);
       }
     };
@@ -404,6 +403,7 @@
     };
 
     GemCascade.prototype.stop = function() {
+      this.object.visible = false;
       return this.run = false;
     };
 
