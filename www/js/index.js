@@ -1555,6 +1555,7 @@
     Main.prototype.gameOver = function() {
       this.grid.hide();
       this.timer.hide();
+      this.timer.stop();
       this.progress_meter.hide();
       this.score_board.hide();
       return this.menu.open('main');

@@ -117,6 +117,7 @@ class Main
   gameOver: =>
     @grid.hide()
     @timer.hide()
+    @timer.stop()
     @progress_meter.hide()
     @score_board.hide()
     @menu.open 'main'
