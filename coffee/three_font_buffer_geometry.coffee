@@ -1,16 +1,15 @@
 class THREE.FontBufferGeometry
-  constructor: (parameters,charset='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') ->
+  constructor: (parameters,prebuild_chars='') ->
     @parameters = parameters
-    @geometries = @buildGeometries(charset.split(''))
+    @geometries = {}
+    @preBuildGeometries(prebuild_chars.split(''))
 
-  buildGeometries: (chararray) ->
-    h = {}
-    h[char] = @buildGeometry(char) for char in chararray
-    h
-
-  buildGeometry: (c) ->
+  preBuildGeometries: (chararray) ->
+    @geometries[char] = @buildGeometry(char) for char in chararray
+    
+  buildGeometry: (char) ->
     object = {}
-    object.geometry = new THREE.BufferGeometry().fromGeometry( new THREE.TextGeometry( c, @parameters ))
+    object.geometry = new THREE.BufferGeometry().fromGeometry( new THREE.TextGeometry( char, @parameters ))
     object.geometry.computeBoundingBox()
     object.width = object.geometry.boundingBox.max.x - object.geometry.boundingBox.min.x
     object
@@ -18,12 +17,13 @@ class THREE.FontBufferGeometry
   buildMesh: (string,mat) ->
     mesh = new THREE.Object3D()
     pos = 0
-    for c in string.split('')
-      if @geometries[c]
-        letter = new THREE.Mesh( @geometries[c].geometry, mat )
-        letter.position.x = pos
-        pos += @geometries[c].width
-        mesh.add letter
-      else
+    for char in string.split('')
+      if char is ' '
         pos += @parameters.height/2
+      else
+        @geometries[char] ?= @buildGeometry(char)
+        letter = new THREE.Mesh( @geometries[char].geometry, mat )
+        letter.position.x = pos
+        pos += @geometries[char].width + @parameters.height/4
+        mesh.add letter
     mesh

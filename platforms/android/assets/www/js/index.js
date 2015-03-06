@@ -770,13 +770,13 @@
     };
 
     Gem.prototype.flyAway = function() {
-      var a, dist, fly_time, fly_tween, fly_tween2, mult, spiny, spinz, to, vx, vy;
+      var a, dist, fly_time, fly_tween, fly_tween2, mult, spinx, spiny, to, vx, vy;
       this.animating = true;
       fly_time = 2000;
       vx = this.object.position.x - 4;
       vy = this.object.position.y - 4;
-      spinz = Math.abs(vx) / vx;
-      spiny = Math.abs(vy) / vy;
+      spiny = Math.abs(vx) / vx;
+      spinx = Math.abs(vy) / vy;
       dist = Math.sqrt(Math.pow(Math.abs(vx), 2) + Math.pow(Math.abs(vy), 2));
       a = Math.atan2(vx, vy);
       mult = dist / 5;
@@ -786,8 +786,8 @@
         s: 1,
         z: 0,
         spin: 0,
-        spinz: spinz,
-        spiny: spiny
+        spiny: spiny,
+        spinx: spinx
       };
       to = {
         x: this.object.position.x + Math.sin(a) * GEMGAME.grid_height * 1.5,
@@ -809,8 +809,8 @@
       this.object.scale.x = this.tween_data.s;
       this.object.scale.y = this.tween_data.s;
       if (this.tween_data.spin) {
-        this.object.rotation.z = this.tween_data.spin * this.tween_data.spinz;
-        this.object.rotation.x = this.tween_data.spin;
+        this.object.rotation.z = this.tween_data.spin * this.tween_data.spinx * this.tween_data.spiny;
+        this.object.rotation.x = -this.tween_data.spin * this.tween_data.spinx;
         return this.object.rotation.y = this.tween_data.spin * this.tween_data.spiny;
       }
     };
@@ -2125,47 +2125,51 @@
   })(THREE.EventDispatcher);
 
   THREE.FontBufferGeometry = (function() {
-    function FontBufferGeometry(parameters, charset) {
-      if (charset == null) {
-        charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    function FontBufferGeometry(parameters, prebuild_chars) {
+      if (prebuild_chars == null) {
+        prebuild_chars = '';
       }
       this.parameters = parameters;
-      this.geometries = this.buildGeometries(charset.split(''));
+      this.geometries = {};
+      this.preBuildGeometries(prebuild_chars.split(''));
     }
 
-    FontBufferGeometry.prototype.buildGeometries = function(chararray) {
-      var char, h, j, len;
-      h = {};
+    FontBufferGeometry.prototype.preBuildGeometries = function(chararray) {
+      var char, j, len, results;
+      results = [];
       for (j = 0, len = chararray.length; j < len; j++) {
         char = chararray[j];
-        h[char] = this.buildGeometry(char);
+        results.push(this.geometries[char] = this.buildGeometry(char));
       }
-      return h;
+      return results;
     };
 
-    FontBufferGeometry.prototype.buildGeometry = function(c) {
+    FontBufferGeometry.prototype.buildGeometry = function(char) {
       var object;
       object = {};
-      object.geometry = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(c, this.parameters));
+      object.geometry = new THREE.BufferGeometry().fromGeometry(new THREE.TextGeometry(char, this.parameters));
       object.geometry.computeBoundingBox();
       object.width = object.geometry.boundingBox.max.x - object.geometry.boundingBox.min.x;
       return object;
     };
 
     FontBufferGeometry.prototype.buildMesh = function(string, mat) {
-      var c, j, len, letter, mesh, pos, ref;
+      var base, char, j, len, letter, mesh, pos, ref;
       mesh = new THREE.Object3D();
       pos = 0;
       ref = string.split('');
       for (j = 0, len = ref.length; j < len; j++) {
-        c = ref[j];
-        if (this.geometries[c]) {
-          letter = new THREE.Mesh(this.geometries[c].geometry, mat);
-          letter.position.x = pos;
-          pos += this.geometries[c].width;
-          mesh.add(letter);
-        } else {
+        char = ref[j];
+        if (char === ' ') {
           pos += this.parameters.height / 2;
+        } else {
+          if ((base = this.geometries)[char] == null) {
+            base[char] = this.buildGeometry(char);
+          }
+          letter = new THREE.Mesh(this.geometries[char].geometry, mat);
+          letter.position.x = pos;
+          pos += this.geometries[char].width + this.parameters.height / 4;
+          mesh.add(letter);
         }
       }
       return mesh;
