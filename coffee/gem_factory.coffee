@@ -8,7 +8,6 @@ class GemFactory
       side: THREE.BackSide 
     @gemid = 0  
     @loadGems()
-    @prebuilt = []
 
   loadGems: ->
     @req = new XMLHttpRequest()
@@ -48,10 +47,7 @@ class GemFactory
     new Gem(def,@gemid++)
 
   random: ->
-    @prebuilt.shift() or @buildGem @defs[Math.floor(Math.random() * @defs.length)]
-
-  prebuild: (n) ->
-    @prebuilt = ( @random() for i in [0...n] )
+    @buildGem @defs[Math.floor(Math.random() * @defs.length)]
 
   onload: ->
     #stub 

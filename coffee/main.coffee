@@ -29,6 +29,10 @@ class Main
       @timesUp()
     
     @score_board = new ScoreBoard()
+
+    @multiplier_display = new MultiplierDisplay()
+    @scene.add @multiplier_display.object
+
     @scene.add( @score_board.object )
     @scene.add( @timer.object )
     @scene.add( @progress_meter.object )
@@ -86,13 +90,13 @@ class Main
     @roaming_light.update t
     @grid.update t
     @timer.update t
+    @multiplier_display.update t
     @renderer.render( @scene, @camera )
     
   gridReady: =>
     @timer.start()
 
   start: ->
-    @grid.end = false
     @score.reset()
     @grid.show()
     @grid.addGems()

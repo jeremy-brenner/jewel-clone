@@ -10,13 +10,13 @@ class Score extends THREE.EventDispatcher
     @chain += 1
     @max_chain = if @chain > @max_chain then @chain else @max_chain
 
-  add: (cleared) ->
+  add: (cleared,x,y) ->
     @score += @worth(cleared)
     @cleared += cleared
     @updateChain()
-    @dispatchEvent @scoreEvent()
+    @dispatchEvent @scoreEvent(x,y)
     if @cleared >= @goal()
-      @dispatchEvent @goalEvent()
+      @dispatchEvent @goalEvent(x,y)
 
   reset: ->
     @score = 0
@@ -34,7 +34,7 @@ class Score extends THREE.EventDispatcher
   goal: ->
     50+(@level-1)*5
 
-  scoreEvent: ->
+  scoreEvent: (x,y) ->
     type: 'scorechange'
     level: @level
     score: @score
@@ -42,8 +42,10 @@ class Score extends THREE.EventDispatcher
     chain: @chain   
     max_chain: @max_chain 
     goal: @goal()
+    x: x
+    y: y
 
-  goalEvent: ->
+  goalEvent: (x,y) ->
     type: 'goalreached'
     level: @level
     score: @score
@@ -51,4 +53,5 @@ class Score extends THREE.EventDispatcher
     chain: @chain  
     max_chain: @max_chain
     goal: @goal()
-
+    x: x
+    y: y

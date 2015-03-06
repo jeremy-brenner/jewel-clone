@@ -9,6 +9,7 @@ class Grid extends THREE.EventDispatcher
     @ready_for_input = true
     @board = @buildBoard()
     @object.add(@board)
+
     @object.position.x = @boardScale(@margin)
     @object.position.y = @boardScale(@margin+@footer)
     @object.scale.multiplyScalar @boardScale()
@@ -36,7 +37,7 @@ class Grid extends THREE.EventDispatcher
       cell.gem = null
 
   checkDirty: ->
-    cell.flagCleared() for cell in @dirtyCells()
+    cell.flagCleared() for cell in @dirtyCells() 
 
   fillHoles: -> 
     @fillCell(cell) for cell in @emptyCells()
@@ -49,6 +50,7 @@ class Grid extends THREE.EventDispatcher
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         cell.gem.addEventListener 'animationcomplete', @animationComplete
+        @object.add cell.gem.object
         cell.gem.show()
         cell.gem.dropTo cell.yPos(), 0, 0, 500
       else
@@ -112,10 +114,6 @@ class Grid extends THREE.EventDispatcher
   addGems: -> 
     @ready = false
     @end = false
-    GEMGAME.gem_factory.prebuild( @w*@h*2 )
-    for gem in GEMGAME.gem_factory.prebuilt
-      @object.add( gem.object )
-      gem.hide()
     for row in @cells
       for cell in row
         loop
@@ -124,6 +122,7 @@ class Grid extends THREE.EventDispatcher
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         cell.gem.addEventListener 'animationcomplete', @animationComplete   
+        @object.add cell.gem.object
         cell.gem.show()
         cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 

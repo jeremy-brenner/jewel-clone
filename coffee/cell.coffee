@@ -14,12 +14,17 @@ class Cell
     @gem = @new_gem
     @new_gem = null
 
+  hasSomeHope: (matches) ->
+    doomed = true
+    doomed = doomed and match.doomed for match in matches 
+    not doomed
+
   flagCleared: ->
-    if @horizontalMatches().length >= 3
-      GEMGAME.score.add @horizontalMatches().length
+    if @horizontalMatches().length >= 3 and @hasSomeHope(@horizontalMatches())
+      GEMGAME.score.add @horizontalMatches().length, @x, @y
       m.doomed = true for m in @horizontalMatches()
-    if @verticalMatches().length >= 3
-      GEMGAME.score.add @verticalMatches().length
+    if @verticalMatches().length >= 3 and @hasSomeHope(@verticalMatches())
+      GEMGAME.score.add @verticalMatches().length, @x, @y
       m.doomed = true for m in @verticalMatches()
     @dirty = false
 
@@ -109,5 +114,3 @@ class Cell
 
   reset: ->
     @gem?.reset()
-
-
