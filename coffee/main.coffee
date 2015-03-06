@@ -14,12 +14,9 @@ class Main
     @audio = new AudioManager(['sounds/woosh.mp3','sounds/pop.mp3'])
     @roaming_light = new RoamingLight(GEMGAME.realWidth())   
     @grid = new Grid(@grid_width, @grid_height,@)
-    @grid.addEventListener 'ready', =>
-      @gridReady()
-    @grid.addEventListener 'levelcomplete', =>
-      @nextLevel()
-    @grid.addEventListener 'levelfailed', =>
-      @levelFailed()
+    @grid.addEventListener 'ready', @gridReady
+    @grid.addEventListener 'levelcomplete', @nextLevel
+    @grid.addEventListener 'gemsdropped', @gameOver
 
     @menu = new Menu()
     @background = new Background()
@@ -91,10 +88,11 @@ class Main
     @timer.update t
     @renderer.render( @scene, @camera )
     
-  gridReady: ->
+  gridReady: =>
     @timer.start()
 
   start: ->
+    @score.reset()
     @grid.show()
     @grid.addGems()
     @progress_meter.show()
@@ -103,7 +101,7 @@ class Main
     @score.levelUp()
     @score_board.show()
 
-  nextLevel: ->
+  nextLevel: =>
     @score.levelUp()
     @timer.setTime(60)     
     @grid.addGems()
@@ -115,5 +113,14 @@ class Main
   timeDanger: ->
     @grid.shakeGems()
 
+  gameOver: =>
+    @grid.hide()
+    @timer.hide()
+    @progress_meter.hide()
+    @score_board.hide()
+    @menu.open 'main'
+
   timesUp: ->
     @grid.dropGems()
+
+     

@@ -19,13 +19,19 @@ class ProgressMeter
       else @cleared/@goal
 
   show: ->
-    @show_tween = { y: -@width/2 }
-    to =  { y: @width/2 }
+    @animate -@width/2, @width/2
+
+  hide: ->
+    @animate @width/2, -@width/2
+
+  animate: (starty,endy) ->
+    @show_tween = { y: starty }
+    to =  { y: endy }
     tween = new TWEEN.Tween( @show_tween )
                      .to( to, 1000 ) 
                      .easing( TWEEN.Easing.Linear.None )
                      .onUpdate( @showTweenTick )
-    tween.start()
+    tween.start()  
 
   showTweenTick: =>
     @object.position.y = @show_tween.y

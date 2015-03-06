@@ -13,7 +13,6 @@ class GemCascade
   buildGem: ->
     gem = GEMGAME.gem_factory.random()
     gem.setY( GEMGAME.realHeight()/GEMGAME.realWidth()*9)  
-    @object.add( gem.object )
     gem.addEventListener 'animationcomplete', =>
       @dropLoop(gem)
     gem
@@ -36,7 +35,9 @@ class GemCascade
   start: ->
     return if @run
     @run = true
-    @dropLoop(gem) for gem in @gems
+    for gem in @gems
+      @object.add gem.object
+      @dropLoop(gem) 
     @object.visible = true
 
   stop: ->

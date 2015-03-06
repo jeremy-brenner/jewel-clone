@@ -77,15 +77,18 @@ class Cell
     if @y%2 isnt @x%2 then 'x' else 'y'
 
   hide: ->
-    @square.rotation[@squareAxis()] = Math.PI/2
+    @animate 0, Math.PI/2
 
   show: ->
-    @tween_data = { r: @square.rotation[@squareAxis()] }
+    @animate Math.PI/2, 0
+
+  animate: (startR, endR) ->
+    @tween_data = { r: startR }
     show_tween = new TWEEN.Tween( @tween_data )
-             .to( { r: 0 }, 1000 ) 
+             .to( { r: endR }, 1000 ) 
              .easing( TWEEN.Easing.Quartic.In )
              .onUpdate( @tweenTick )
-    show_tween.start()  
+    show_tween.start() 
 
   tweenTick: =>
     @square.rotation[@squareAxis()] = @tween_data.r 

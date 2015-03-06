@@ -157,7 +157,8 @@ class Gem extends THREE.EventDispatcher
 
   dropToDoom: ->
     @addEventListener 'animationcomplete', @hide
-    @dropTo -5, Math.random()*1000, -@object.position.y
+    @object.position.z = -5
+    @dropTo -5, Math.random()*1000, 0
 
   dropTo: (y,delay,z,length=1250) ->
     @animating = true

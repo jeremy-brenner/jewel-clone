@@ -150,9 +150,18 @@ class Grid extends THREE.EventDispatcher
   show: ->
     cell.show() for cell in @flatCells()
 
+  hide: ->
+    cell.hide() for cell in @flatCells()
+
   dropGems: ->
     cell.gem.dropToDoom() for cell in @flatCells()
-      
+    @addEventListener 'animationcomplete', @gemsDropped
+     
+
+  gemsDropped: =>
+    @removeEventListener 'animationcomplete', @gemsDropped
+    @dispatchEvent
+      type: 'gemsdropped'     
 
   complete: ->
     @addEventListener 'animationcomplete', @flyAway

@@ -1,10 +1,6 @@
 class Score extends THREE.EventDispatcher
   constructor: ->
-    @score = 0
-    @cleared = 0
-    @chain = 0
-    @level = 0
-    @max_chain = 0
+    @reset()
     @last_updated = 0
 
   worth: (cleared) ->
@@ -21,6 +17,13 @@ class Score extends THREE.EventDispatcher
     @dispatchEvent @scoreEvent()
     if @cleared >= @goal()
       @dispatchEvent @goalEvent()
+
+  reset: ->
+    @score = 0
+    @cleared = 0
+    @chain = 0
+    @level = 0
+    @max_chain = 0
 
   levelUp: ->
     @level += 1

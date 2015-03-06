@@ -138,13 +138,19 @@ class Timer extends THREE.EventDispatcher
       r
 
   show: ->
-    @show_tween = { x: @hiddenX() }
-    to =  { x: @shownX() }
+    @animate @hiddenX(), @shownX()
+
+  hide: ->
+    @animate @shownX(), @hiddenX()
+
+  animate: (startx,endx) ->
+    @show_tween = { x: startx }
+    to =  { x: endx }
     tween = new TWEEN.Tween( @show_tween )
                      .to( to, 1000 ) 
                      .easing( TWEEN.Easing.Linear.None )
                      .onUpdate( @showTweenTick )
-    tween.start()
+    tween.start()    
 
   showTweenTick: =>
     @object.position.x = @show_tween.x

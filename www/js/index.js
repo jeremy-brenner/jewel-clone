@@ -265,16 +265,20 @@
     };
 
     Cell.prototype.hide = function() {
-      return this.square.rotation[this.squareAxis()] = Math.PI / 2;
+      return this.animate(0, Math.PI / 2);
     };
 
     Cell.prototype.show = function() {
+      return this.animate(Math.PI / 2, 0);
+    };
+
+    Cell.prototype.animate = function(startR, endR) {
       var show_tween;
       this.tween_data = {
-        r: this.square.rotation[this.squareAxis()]
+        r: startR
       };
       show_tween = new TWEEN.Tween(this.tween_data).to({
-        r: 0
+        r: endR
       }, 1000).easing(TWEEN.Easing.Quartic.In).onUpdate(this.tweenTick);
       return show_tween.start();
     };
@@ -360,7 +364,6 @@
       var gem;
       gem = GEMGAME.gem_factory.random();
       gem.setY(GEMGAME.realHeight() / GEMGAME.realWidth() * 9);
-      this.object.add(gem.object);
       gem.addEventListener('animationcomplete', (function(_this) {
         return function() {
           return _this.dropLoop(gem);
@@ -397,6 +400,7 @@
       ref = this.gems;
       for (j = 0, len = ref.length; j < len; j++) {
         gem = ref[j];
+        this.object.add(gem.object);
         this.dropLoop(gem);
       }
       return this.object.visible = true;
@@ -634,7 +638,8 @@
 
     Gem.prototype.dropToDoom = function() {
       this.addEventListener('animationcomplete', this.hide);
-      return this.dropTo(-5, Math.random() * 1000, -this.object.position.y);
+      this.object.position.z = -5;
+      return this.dropTo(-5, Math.random() * 1000, 0);
     };
 
     Gem.prototype.dropTo = function(y, delay, z, length) {
@@ -927,6 +932,7 @@
     function Grid(w, h) {
       this.levelComplete = bind(this.levelComplete, this);
       this.flyAway = bind(this.flyAway, this);
+      this.gemsDropped = bind(this.gemsDropped, this);
       this.animationComplete = bind(this.animationComplete, this);
       this.w = w;
       this.h = h;
@@ -1228,15 +1234,32 @@
       return results;
     };
 
-    Grid.prototype.dropGems = function() {
+    Grid.prototype.hide = function() {
       var cell, j, len, ref, results;
       ref = this.flatCells();
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
-        results.push(cell.gem.dropToDoom());
+        results.push(cell.hide());
       }
       return results;
+    };
+
+    Grid.prototype.dropGems = function() {
+      var cell, j, len, ref;
+      ref = this.flatCells();
+      for (j = 0, len = ref.length; j < len; j++) {
+        cell = ref[j];
+        cell.gem.dropToDoom();
+      }
+      return this.addEventListener('animationcomplete', this.gemsDropped);
+    };
+
+    Grid.prototype.gemsDropped = function() {
+      this.removeEventListener('animationcomplete', this.gemsDropped);
+      return this.dispatchEvent({
+        type: 'gemsdropped'
+      });
     };
 
     Grid.prototype.complete = function() {
@@ -1393,7 +1416,10 @@
 
   Main = (function() {
     function Main() {
+      this.gameOver = bind(this.gameOver, this);
       this.goalReached = bind(this.goalReached, this);
+      this.nextLevel = bind(this.nextLevel, this);
+      this.gridReady = bind(this.gridReady, this);
       this.renderLoop = bind(this.renderLoop, this);
       this.closeAbout = bind(this.closeAbout, this);
       this.gemsLoaded = bind(this.gemsLoaded, this);
@@ -1411,21 +1437,9 @@
       this.audio = new AudioManager(['sounds/woosh.mp3', 'sounds/pop.mp3']);
       this.roaming_light = new RoamingLight(GEMGAME.realWidth());
       this.grid = new Grid(this.grid_width, this.grid_height, this);
-      this.grid.addEventListener('ready', (function(_this) {
-        return function() {
-          return _this.gridReady();
-        };
-      })(this));
-      this.grid.addEventListener('levelcomplete', (function(_this) {
-        return function() {
-          return _this.nextLevel();
-        };
-      })(this));
-      this.grid.addEventListener('levelfailed', (function(_this) {
-        return function() {
-          return _this.levelFailed();
-        };
-      })(this));
+      this.grid.addEventListener('ready', this.gridReady);
+      this.grid.addEventListener('levelcomplete', this.nextLevel);
+      this.grid.addEventListener('gemsdropped', this.gameOver);
       this.menu = new Menu();
       this.background = new Background();
       this.progress_meter = new ProgressMeter();
@@ -1510,6 +1524,7 @@
     };
 
     Main.prototype.start = function() {
+      this.score.reset();
       this.grid.show();
       this.grid.addGems();
       this.progress_meter.show();
@@ -1532,6 +1547,14 @@
 
     Main.prototype.timeDanger = function() {
       return this.grid.shakeGems();
+    };
+
+    Main.prototype.gameOver = function() {
+      this.grid.hide();
+      this.timer.hide();
+      this.progress_meter.hide();
+      this.score_board.hide();
+      return this.menu.open('main');
     };
 
     Main.prototype.timesUp = function() {
@@ -1616,7 +1639,7 @@
       var i, item, j, l, len, len1, ref, ref1, results;
       if (!this.cascade) {
         if (this.cascade == null) {
-          this.cascade = new GemCascade(20);
+          this.cascade = new GemCascade(50);
         }
         this.object.add(this.cascade.object);
       }
@@ -1805,12 +1828,20 @@
     };
 
     ProgressMeter.prototype.show = function() {
+      return this.animate(-this.width / 2, this.width / 2);
+    };
+
+    ProgressMeter.prototype.hide = function() {
+      return this.animate(this.width / 2, -this.width / 2);
+    };
+
+    ProgressMeter.prototype.animate = function(starty, endy) {
       var to, tween;
       this.show_tween = {
-        y: -this.width / 2
+        y: starty
       };
       to = {
-        y: this.width / 2
+        y: endy
       };
       tween = new TWEEN.Tween(this.show_tween).to(to, 1000).easing(TWEEN.Easing.Linear.None).onUpdate(this.showTweenTick);
       return tween.start();
@@ -2035,12 +2066,20 @@
     };
 
     ScoreBoard.prototype.show = function() {
+      return this.animate(this.hiddenX(), this.shownX());
+    };
+
+    ScoreBoard.prototype.hide = function() {
+      return this.animate(this.shownX(), this.hiddenX());
+    };
+
+    ScoreBoard.prototype.animate = function(startx, endx) {
       var to, tween;
       this.show_tween = {
-        x: this.hiddenX()
+        x: startx
       };
       to = {
-        x: this.shownX()
+        x: endx
       };
       tween = new TWEEN.Tween(this.show_tween).to(to, 1000).easing(TWEEN.Easing.Linear.None).onUpdate(this.showTweenTick);
       return tween.start();
@@ -2058,11 +2097,7 @@
     extend(Score, superClass);
 
     function Score() {
-      this.score = 0;
-      this.cleared = 0;
-      this.chain = 0;
-      this.level = 0;
-      this.max_chain = 0;
+      this.reset();
       this.last_updated = 0;
     }
 
@@ -2083,6 +2118,14 @@
       if (this.cleared >= this.goal()) {
         return this.dispatchEvent(this.goalEvent());
       }
+    };
+
+    Score.prototype.reset = function() {
+      this.score = 0;
+      this.cleared = 0;
+      this.chain = 0;
+      this.level = 0;
+      return this.max_chain = 0;
     };
 
     Score.prototype.levelUp = function() {
@@ -2370,12 +2413,20 @@
     };
 
     Timer.prototype.show = function() {
+      return this.animate(this.hiddenX(), this.shownX());
+    };
+
+    Timer.prototype.hide = function() {
+      return this.animate(this.shownX(), this.hiddenX());
+    };
+
+    Timer.prototype.animate = function(startx, endx) {
       var to, tween;
       this.show_tween = {
-        x: this.hiddenX()
+        x: startx
       };
       to = {
-        x: this.shownX()
+        x: endx
       };
       tween = new TWEEN.Tween(this.show_tween).to(to, 1000).easing(TWEEN.Easing.Linear.None).onUpdate(this.showTweenTick);
       return tween.start();
