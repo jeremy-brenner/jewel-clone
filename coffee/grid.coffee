@@ -109,8 +109,9 @@ class Grid extends THREE.EventDispatcher
       @object.remove( cell.gem.object )
       cell.gem = null 
 
-  addGems: ->
+  addGems: -> 
     @ready = false
+    @end = false
     GEMGAME.gem_factory.prebuild( @w*@h*2 )
     for gem in GEMGAME.gem_factory.prebuilt
       @object.add( gem.object )
@@ -126,6 +127,7 @@ class Grid extends THREE.EventDispatcher
         cell.gem.show()
         cell.gem.dropTo cell.yPos(), 1000+cell.yPos()*50+cell.xPos()*10, -cell.yPos()
 
+
   buildBoard: ->
     board = new THREE.Object3D()
     board.position.z = -20*@h
@@ -135,12 +137,12 @@ class Grid extends THREE.EventDispatcher
 
   animationComplete: =>
     return if @animating()
-    @dispatchEvent
-      type: 'animationcomplete'
-    if not @ready 
+    if not @ready and not @end
       @ready = true
       @dispatchEvent
         type: 'ready'      
+    @dispatchEvent
+      type: 'animationcomplete'
 
   buildCells: ->
     for x in [0...@h]
@@ -154,10 +156,10 @@ class Grid extends THREE.EventDispatcher
     cell.hide() for cell in @flatCells()
 
   dropGems: ->
+    @end = true
     cell.gem.dropToDoom() for cell in @flatCells()
     @addEventListener 'animationcomplete', @gemsDropped
      
-
   gemsDropped: =>
     @removeEventListener 'animationcomplete', @gemsDropped
     @dispatchEvent

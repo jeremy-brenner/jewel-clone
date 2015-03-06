@@ -39,7 +39,7 @@ class ProgressMeter
   resizeBar: ->
     @tween_data = { scale: @cylinder.scale.y, position: @cylinder.position.y }
     tween = new TWEEN.Tween( @tween_data )
-                     .to( { scale: @perc(), position: @posY() } , 250 ) 
+                     .to( { scale: @perc(), position: @posY() } , 500 ) 
                      .easing( TWEEN.Easing.Linear.None )
                      .onUpdate( @tweenTick )
     tween.start()

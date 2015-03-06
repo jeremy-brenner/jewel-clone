@@ -1146,6 +1146,7 @@
     Grid.prototype.addGems = function() {
       var cell, gem, j, l, len, len1, ref, ref1, results, row;
       this.ready = false;
+      this.end = false;
       GEMGAME.gem_factory.prebuild(this.w * this.h * 2);
       ref = GEMGAME.gem_factory.prebuilt;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -1196,15 +1197,15 @@
       if (this.animating()) {
         return;
       }
-      this.dispatchEvent({
-        type: 'animationcomplete'
-      });
-      if (!this.ready) {
+      if (!this.ready && !this.end) {
         this.ready = true;
-        return this.dispatchEvent({
+        this.dispatchEvent({
           type: 'ready'
         });
       }
+      return this.dispatchEvent({
+        type: 'animationcomplete'
+      });
     };
 
     Grid.prototype.buildCells = function() {
@@ -1247,6 +1248,7 @@
 
     Grid.prototype.dropGems = function() {
       var cell, j, len, ref;
+      this.end = true;
       ref = this.flatCells();
       for (j = 0, len = ref.length; j < len; j++) {
         cell = ref[j];
@@ -1524,6 +1526,7 @@
     };
 
     Main.prototype.start = function() {
+      this.grid.end = false;
       this.score.reset();
       this.grid.show();
       this.grid.addGems();
@@ -1860,7 +1863,7 @@
       tween = new TWEEN.Tween(this.tween_data).to({
         scale: this.perc(),
         position: this.posY()
-      }, 250).easing(TWEEN.Easing.Linear.None).onUpdate(this.tweenTick);
+      }, 500).easing(TWEEN.Easing.Linear.None).onUpdate(this.tweenTick);
       return tween.start();
     };
 
@@ -2399,7 +2402,11 @@
     };
 
     Timer.prototype.remaining = function() {
-      return this.time - this.elapsed();
+      if (this.start_time === null) {
+        return this.time;
+      } else {
+        return this.time - this.elapsed();
+      }
     };
 
     Timer.prototype.remainingDigits = function() {
@@ -2437,7 +2444,8 @@
     };
 
     Timer.prototype.setTime = function(time) {
-      return this.time = time;
+      this.time = time;
+      return this.updateClock();
     };
 
     Timer.prototype.status = function() {

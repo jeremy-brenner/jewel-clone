@@ -92,6 +92,7 @@ class Main
     @timer.start()
 
   start: ->
+    @grid.end = false
     @score.reset()
     @grid.show()
     @grid.addGems()

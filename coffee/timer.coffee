@@ -128,7 +128,7 @@ class Timer extends THREE.EventDispatcher
     Math.floor( (@updated_at-@start_time)/1000 )
 
   remaining: ->
-    @time-@elapsed()
+    if @start_time is null then @time else @time-@elapsed()
   
   remainingDigits: ->
     r = @remaining().toString().split('')
@@ -158,6 +158,7 @@ class Timer extends THREE.EventDispatcher
 
   setTime: (time) ->
     @time = time
+    @updateClock()
 
   status: ->
     switch
