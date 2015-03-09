@@ -23,7 +23,7 @@ class ScoreBoard
     @meshes = {}
 
     @buildObjects()
-    GEMGAME.score.addEventListener 'scorechange', @scoreChange
+    GEMCRUSHER.score.addEventListener 'scorechange', @scoreChange
 
   fontSize: ->
     @height()*0.12
@@ -45,7 +45,7 @@ class ScoreBoard
     @object.position.z = -90000
     @buildBackdrop()
     @object.position.x = @hiddenX()
-    @object.position.y = GEMGAME.realWidth() + @height()/2 + GEMGAME.realWidth()/8*1.125
+    @object.position.y = GEMCRUSHER.base_width + @height()/2 + GEMCRUSHER.base_width/8*1.125
 
     for label,i in ['score','max_chain','cleared','level']
       text_label = label.split('_').join(' ')
@@ -63,10 +63,10 @@ class ScoreBoard
   
 
   width: ->
-    GEMGAME.realWidth()*0.5
+    GEMCRUSHER.base_width*0.5
 
   height: ->
-    GEMGAME.realWidth()*(4/15)
+    GEMCRUSHER.base_width*(4/15)
 
   buildBackdrop: ->
     mat = new THREE.MeshBasicMaterial
@@ -113,3 +113,6 @@ class ScoreBoard
 
   showTweenTick: =>
     @object.position.x = @show_tween.x
+
+window.GemCrusher ?= {}
+GemCrusher.ScoreBoard = ScoreBoard

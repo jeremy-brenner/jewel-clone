@@ -16,3 +16,5 @@ class Fps
       @frames = 0
       @lasttime = t
    
+window.GemCrusher ?= {}
+GemCrusher.Fps = Fps

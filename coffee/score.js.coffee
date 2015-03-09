@@ -55,3 +55,7 @@ class Score extends THREE.EventDispatcher
     goal: @goal()
     x: x
     y: y
+
+
+window.GemCrusher ?= {}
+GemCrusher.Score = Score

@@ -26,7 +26,7 @@ class AudioManager
     #console.log 'loadfiles', files
     for file in files
       #console.log 'loading', file
-      af = new AudioLoader(file) 
+      af = new GemCrusher.AudioLoader(file) 
       af.onload = @fileLoaded
       af
 
@@ -52,4 +52,5 @@ class AudioManager
   onload: ->
     #noop
   
-
+window.GemCrusher ?= {}
+GemCrusher.AudioManager = AudioManager

@@ -27,10 +27,10 @@ class Timer extends THREE.EventDispatcher
     @buildObject()
 
   width: ->
-    GEMGAME.realWidth()*0.4
+    GEMCRUSHER.base_width*0.4
 
   height: ->
-    GEMGAME.realWidth()*(4/15)
+    GEMCRUSHER.base_width*(4/15)
 
   digitColor: ->
     switch @status()
@@ -88,13 +88,13 @@ class Timer extends THREE.EventDispatcher
 
     @object.position.z = -90000
     @object.position.x = @hiddenX()
-    @object.position.y = GEMGAME.realWidth() + @height()/2 + GEMGAME.realWidth()/8*1.125
+    @object.position.y = GEMCRUSHER.base_width + @height()/2 + GEMCRUSHER.base_width/8*1.125
   
   hiddenX: ->
-    GEMGAME.realWidth() + @width()/2
+    GEMCRUSHER.base_width + @width()/2
 
   shownX: ->
-    GEMGAME.realWidth() - @width()/2*1.125
+    GEMCRUSHER.base_width - @width()/2*1.125
 
   buildCell: ->
     object = new THREE.Object3D()
@@ -180,3 +180,5 @@ class Timer extends THREE.EventDispatcher
       @last_remaining = @remaining()
       @sendEvents()
  
+window.GemCrusher ?= {}
+GemCrusher.Timer = Timer

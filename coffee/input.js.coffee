@@ -1,3 +1,4 @@
+
 class Input extends THREE.EventDispatcher
   constructor: ->
     @touching = false
@@ -12,17 +13,36 @@ class Input extends THREE.EventDispatcher
       alpha: 0
       beta: 0
       gamma: 0
+    @scale_factor = 1
 
   bindEvents: ->
+    window.addEventListener 'mousedown', @mouseDown
+    window.addEventListener 'mousemove', @mouseMove
+    window.addEventListener 'mouseup', @mouseUp
     window.addEventListener 'touchstart', @touchStart
     window.addEventListener 'touchend', @touchEnd
     window.addEventListener 'touchmove', @touchMove
     window.addEventListener 'deviceorientation', @updateOrientation 
 
+  mouseDown: (e) =>
+    if e.buttons is 1
+      @startEvent e.clientX, e.clientY
+
+  mouseMove: (e) =>
+    if e.buttons is 1
+      @moveEvent e.clientX, e.clientY
+
+  mouseUp: (e) =>
+    if e.buttons is 1
+      @endEvent()
+
   touchStart: (e) =>
+    @startEvent @touchX(e), @touchY(e)
+
+  startEvent: (x,y) ->
     @touching = true
-    @start.x = @touchX(e)
-    @start.y = @realHeight() - @touchY(e)
+    @start.x = @scale x
+    @start.y = @scale( @realHeight() - y )
     @move = 
       x: @start.x
       y: @start.y
@@ -33,13 +53,19 @@ class Input extends THREE.EventDispatcher
       y: @start.y
 
   touchEnd: (e) =>
+    @endEvent()
+
+  endEvent: ->
     @touching = false
     @dispatchEvent 
       type: 'touchend'
 
   touchMove: (e) =>
-    @move.x = @touchX(e)
-    @move.y = @realHeight() - @touchY(e)
+    @moveEvent @touchX(e), @touchY(e)
+
+  moveEvent: (x,y) ->
+    @move.x = @scale x
+    @move.y = @scale( @realHeight() - y )
     
     @dispatchEvent 
       type: 'touchmove'
@@ -59,3 +85,10 @@ class Input extends THREE.EventDispatcher
 
   realHeight: ->
     window.innerHeight * window.devicePixelRatio
+
+  scale: (i) ->
+    i*@scale_factor
+
+
+window.GemCrusher ?= {}
+GemCrusher.Input = Input

@@ -44,10 +44,13 @@ class GemFactory
       shininess: 60
   
   buildGem: (def) ->
-    new Gem(def,@gemid++)
+    new GemCrusher.Gem(def,@gemid++)
 
   random: ->
     @buildGem @defs[Math.floor(Math.random() * @defs.length)]
 
   onload: ->
     #stub 
+
+window.GemCrusher ?= {}
+GemCrusher.GemFactory = GemFactory

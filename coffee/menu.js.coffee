@@ -19,21 +19,21 @@ class Menu
         color: 'green'
         exec: =>
           @cascade.stop()
-          GEMGAME.start()
+          GEMCRUSHER.start()
     #  ,
     #    label: 'Config'
     #    color: 'yellow'
     #    exec: ->
-    #      GEMGAME.menu.open('main')
+    #      GEMCRUSHER.menu.open('main')
       , 
         label: 'About'
         color: 'teal'
         exec: ->
-          GEMGAME.showAbout()
+          GEMCRUSHER.showAbout()
       ,
         label: 'Quit'
         color: 'red'
-        exec: navigator.app.exitApp
+        exec: navigator?.app?.exitApp
       ]
     @outline = new THREE.MeshBasicMaterial
       color: 'black'  
@@ -41,7 +41,7 @@ class Menu
 
     @meshes = []
     @busy = false
-    GEMGAME.input.addEventListener 'touchstart', @handleTouch
+    GEMCRUSHER.input.addEventListener 'touchstart', @handleTouch
 
   handleTouch: (e) =>
     if @menuIsOpen() 
@@ -50,14 +50,14 @@ class Menu
         @choose(i)
 
   fontSize: ->
-    GEMGAME.realWidth()/12
+    GEMCRUSHER.base_width/12
 
   center: (width) ->
-    GEMGAME.realWidth()/2 - width/2
+    GEMCRUSHER.base_width/2 - width/2
 
   open: (menu) ->
     unless @cascade
-      @cascade ?= new GemCascade(50)
+      @cascade ?= new GemCrusher.GemCascade(50)
       @object.add @cascade.object
 
     @cascade.start()
@@ -91,7 +91,7 @@ class Menu
  
     item.object.position.x = @center item.width
    
-    item.object.position.y = i*@fontSize()*-2 + GEMGAME.realHeight()/2 + @current.length*@fontSize()/2
+    item.object.position.y = i*@fontSize()*-2 + ( GEMCRUSHER.base_width + GEMCRUSHER.base_width*GEMCRUSHER.aspect() )/2 + @current.length*@fontSize()/2
 
   createLetter: (letter,mat) ->
     return if letter is ' '
@@ -167,4 +167,6 @@ class Menu
     for item,i in @current
       return i if ty > item.object.position.y
     return false
-   
+
+window.GemCrusher ?= {}
+GemCrusher.Menu = Menu

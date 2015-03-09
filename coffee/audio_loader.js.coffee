@@ -26,3 +26,6 @@ class AudioLoader
   
   onload: ->
     #noop
+
+window.GemCrusher ?= {}
+GemCrusher.AudioLoader = AudioLoader

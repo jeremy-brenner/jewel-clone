@@ -21,10 +21,10 @@ class Cell
 
   flagCleared: ->
     if @horizontalMatches().length >= 3 and @hasSomeHope(@horizontalMatches())
-      GEMGAME.score.add @horizontalMatches().length, @x, @y
+      GEMCRUSHER.score.add @horizontalMatches().length, @x, @y
       m.doomed = true for m in @horizontalMatches()
     if @verticalMatches().length >= 3 and @hasSomeHope(@verticalMatches())
-      GEMGAME.score.add @verticalMatches().length, @x, @y
+      GEMCRUSHER.score.add @verticalMatches().length, @x, @y
       m.doomed = true for m in @verticalMatches()
     @dirty = false
 
@@ -60,13 +60,13 @@ class Cell
   match: (def_id,dir) ->
     cell = switch dir
       when 'left'
-        GEMGAME.grid.cells[@x-1]?[@y]
+        GEMCRUSHER.grid.cells[@x-1]?[@y]
       when 'right'
-        GEMGAME.grid.cells[@x+1]?[@y]
+        GEMCRUSHER.grid.cells[@x+1]?[@y]
       when 'up'
-        GEMGAME.grid.cells[@x]?[@y+1]
+        GEMCRUSHER.grid.cells[@x]?[@y+1]
       when 'down'
-        GEMGAME.grid.cells[@x]?[@y-1]
+        GEMCRUSHER.grid.cells[@x]?[@y-1]
 
     return [] unless cell
 
@@ -114,3 +114,6 @@ class Cell
 
   reset: ->
     @gem?.reset()
+
+window.GemCrusher ?= {}
+GemCrusher.Cell = Cell

@@ -1,4 +1,4 @@
-class THREE.FontBufferGeometry
+class FontBufferGeometry
   constructor: (parameters,prebuild_chars='') ->
     @parameters = parameters
     @geometries = {}
@@ -27,3 +27,7 @@ class THREE.FontBufferGeometry
         pos += @geometries[char].width + @parameters.height/4
         mesh.add letter
     mesh
+
+window.THREE ?= {}
+
+THREE.FontBufferGeometry = FontBufferGeometry

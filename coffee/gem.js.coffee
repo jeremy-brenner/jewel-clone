@@ -49,7 +49,7 @@ class Gem extends THREE.EventDispatcher
   hurlStart: =>
     @hide()
     chunk.position.z = 1 for chunk in @chunks
-    GEMGAME.audio.play('pop')
+    GEMCRUSHER.audio.play('pop')
 
   hurlChunks: (delay) ->
 
@@ -89,8 +89,8 @@ class Gem extends THREE.EventDispatcher
 
   randomDest: ->
     ra = Math.PI*2*Math.random()
-    rx = Math.sin(ra) * GEMGAME.grid_height*(1+Math.random())
-    ry = Math.cos(ra) * GEMGAME.grid_height*(1+Math.random())
+    rx = Math.sin(ra) * GEMCRUSHER.grid_height*(1+Math.random())
+    ry = Math.cos(ra) * GEMCRUSHER.grid_height*(1+Math.random())
     { x: rx, y: ry }
 
   hurlTweenTick: =>
@@ -196,7 +196,7 @@ class Gem extends THREE.EventDispatcher
       @failedSwapTween(x,y).start()
 
   swapStart: ->
-    GEMGAME.audio.play('woosh')
+    GEMCRUSHER.audio.play('woosh')
 
   zoomTween: (front=true) ->
     sc = if front then 1.5 else 0.5
@@ -277,8 +277,8 @@ class Gem extends THREE.EventDispatcher
     @tween_data = { x: @object.position.x, y: @object.position.y, s: 1, z: 0, spin: 0, spiny: spiny, spinx: spinx}
     
     to = 
-      x: @object.position.x + Math.sin(a) * GEMGAME.grid_height*1.5 
-      y: @object.position.y + Math.cos(a) * GEMGAME.grid_height*1.5 
+      x: @object.position.x + Math.sin(a) * GEMCRUSHER.grid_height*1.5 
+      y: @object.position.y + Math.cos(a) * GEMCRUSHER.grid_height*1.5 
    
     fly_tween = new TWEEN.Tween( @tween_data )
                          .to( to, fly_time ) 
@@ -313,3 +313,6 @@ class Gem extends THREE.EventDispatcher
     @object.rotation.z = 0    
     @object.scale.x = 1
     @object.scale.y = 1
+
+window.GemCrusher ?= {}
+GemCrusher.Gem = Gem

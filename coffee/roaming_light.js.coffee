@@ -12,11 +12,14 @@ class RoamingLight
     Math.cos(t/(@speed*2)) * @scale
 
   xOffset: ->
-    GEMGAME.input.orientation.gamma * (Math.PI/180) * -1 * @scale
+    GEMCRUSHER.input.orientation.gamma * (Math.PI/180) * -1 * @scale
 
   yOffset: ->
-    GEMGAME.input.orientation.beta * (Math.PI/180) * @scale
+    GEMCRUSHER.input.orientation.beta * (Math.PI/180) * @scale
 
   update: (t) ->
     @object.position.x = @xPos(t)+@xOffset()
     @object.position.y = @yPos(t)+@yOffset()
+
+window.GemCrusher ?= {}
+GemCrusher.RoamingLight = RoamingLight

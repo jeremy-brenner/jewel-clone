@@ -28,13 +28,13 @@ class MultiplierDisplay
 
     @meshes = []
 
-    GEMGAME.score.addEventListener 'scorechange', @scoreChange 
+    GEMCRUSHER.score.addEventListener 'scorechange', @scoreChange 
 
   fontSize: ->
     @cellSize()/2
 
   cellSize: ->
-    GEMGAME.realWidth()/8
+    GEMCRUSHER.base_width/GEMCRUSHER.grid_width
 
   color: (c) ->
     switch c
@@ -70,3 +70,5 @@ class MultiplierDisplay
     @meshes = new_meshes
    
 
+window.GemCrusher ?= {}
+GemCrusher.MultiplierDisplay = MultiplierDisplay

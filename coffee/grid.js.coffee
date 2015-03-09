@@ -10,9 +10,12 @@ class Grid extends THREE.EventDispatcher
     @board = @buildBoard()
     @object.add(@board)
 
-    @object.position.x = @boardScale(@margin)
-    @object.position.y = @boardScale(@margin+@footer)
-    @object.scale.multiplyScalar @boardScale()
+    @object.position.x = @scale @margin 
+    @object.position.y = @scale @margin+@footer
+    @object.scale.multiplyScalar @scale()
+
+  scale: (i=1) ->
+    GEMCRUSHER.base_width/@w*i
 
   flatCells: ->
     Array.prototype.concat.apply([],@cells)
@@ -46,7 +49,7 @@ class Grid extends THREE.EventDispatcher
     cell.dirty = true
     for y in [cell.y+1..@h]
       if y is @h
-        cell.gem = GEMGAME.gem_factory.random()
+        cell.gem = GEMCRUSHER.gem_factory.random()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
         cell.gem.addEventListener 'animationcomplete', @animationComplete
@@ -69,11 +72,11 @@ class Grid extends THREE.EventDispatcher
     if @dirtyCells().length > 0 
       @checkDirty()
     else
-      GEMGAME.score.chain = 0
+      GEMCRUSHER.score.chain = 0
 
-    if @ready_for_input and GEMGAME.input.touching
-      @selected = @touchedCell(GEMGAME.input.start)
-      current = @touchedCell(GEMGAME.input.move)
+    if @ready_for_input and GEMCRUSHER.input.touching
+      @selected = @touchedCell(GEMCRUSHER.input.start)
+      current = @touchedCell(GEMCRUSHER.input.move)
       return @stopInput() unless @validMove( @selected, current )
 
       if @selected is current
@@ -82,7 +85,7 @@ class Grid extends THREE.EventDispatcher
         @stopInput()
         @selected.swapGems current
   
-    if not GEMGAME.input.touching and not @animating()
+    if not GEMCRUSHER.input.touching and not @animating()
       if @selected
         @selected.reset()
         @selected = null
@@ -96,15 +99,12 @@ class Grid extends THREE.EventDispatcher
     @selected?.reset()  
 
   bottomOffset: ->
-    @boardScale(@footer)
+    @scale @footer
 
   touchedCell: (pos) ->
-    x = Math.floor pos.x/@boardScale()-@margin
-    y = Math.floor (pos.y-@bottomOffset())/@boardScale()
+    x = Math.floor pos.x/@scale()-@margin
+    y = Math.floor (pos.y-@bottomOffset())/@scale()
     @cells[x]?[y]
-
-  boardScale: (i=1)->
-    GEMGAME.realWidth() / @w * i
 
   clear: ->
     for cell in @flatCells()
@@ -117,7 +117,7 @@ class Grid extends THREE.EventDispatcher
     for row in @cells
       for cell in row
         loop
-          cell.gem = GEMGAME.gem_factory.random()
+          cell.gem = GEMCRUSHER.gem_factory.random()
           break unless cell.willClear()
         cell.gem.setX( cell.xPos() )
         cell.gem.setY( @h*2 )
@@ -146,7 +146,7 @@ class Grid extends THREE.EventDispatcher
   buildCells: ->
     for x in [0...@h]
       for y in [0...@w]
-        new Cell(x,y)
+        new GemCrusher.Cell(x,y)
 
   show: ->
     cell.show() for cell in @flatCells()
@@ -181,3 +181,5 @@ class Grid extends THREE.EventDispatcher
   shakeGems: ->
     cell.gem.shake() for cell in @flatCells()
       
+window.GemCrusher ?= {}
+GemCrusher.Grid = Grid

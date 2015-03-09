@@ -2,10 +2,10 @@ class ProgressMeter
   constructor: () ->
     @cleared = 0
     @goal = 0
-    @width = GEMGAME.realWidth()/8
-    @length = GEMGAME.realWidth()-@width/2
+    @width = GEMCRUSHER.base_width/8
+    @length = GEMCRUSHER.base_width-@width/2
     @buildObject()
-    GEMGAME.score.addEventListener('scorechange', @scoreChange )
+    GEMCRUSHER.score.addEventListener('scorechange', @scoreChange )
 
   scoreChange: (e) =>
     @cleared = e.cleared
@@ -59,7 +59,7 @@ class ProgressMeter
    
   buildObject: ->
     @object = new THREE.Object3D()
-    @object.position.x = GEMGAME.realWidth()/2
+    @object.position.x = GEMCRUSHER.base_width/2
     @object.position.y = -@width/2
     @object.rotation.z = Math.PI/2
 
@@ -87,7 +87,10 @@ class ProgressMeter
       transparent: true
       opacity: 0.2
 
-    cyl_outline_geom = new THREE.PlaneBufferGeometry @width, GEMGAME.realWidth() 
+    cyl_outline_geom = new THREE.PlaneBufferGeometry @width, GEMCRUSHER.base_width
     cyl_outline = new THREE.Mesh( cyl_outline_geom, cyl_outline_mat )  
     cyl_outline.position.z = -1
     @object.add cyl_outline     
+
+window.GemCrusher ?= {}
+GemCrusher.ProgressMeter = ProgressMeter
