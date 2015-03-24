@@ -17,7 +17,7 @@
        under the License.
  */
 
-package net.drshoggoth.jewelclone;
+package net.drshoggoth.supergemcrusherdeluxe;
 
 import android.os.Bundle;
 import org.apache.cordova.*;

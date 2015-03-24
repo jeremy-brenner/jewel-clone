@@ -14,7 +14,7 @@ class Main extends THREE.EventDispatcher
     @score.addEventListener('goalreached', @goalReached )
     @gem_factory = new GemCrusher.GemFactory()
     @audio = new GemCrusher.AudioManager(['sounds/woosh.mp3','sounds/pop.mp3'])
-    @roaming_light = new GemCrusher.RoamingLight(GEMCRUSHER.width())   
+    @roaming_light = new GemCrusher.RoamingLight(@base_width)   
     @grid = new GemCrusher.Grid(@grid_width, @grid_height,@)
     @grid.addEventListener 'ready', @gridReady
     @grid.addEventListener 'levelcomplete', @nextLevel
