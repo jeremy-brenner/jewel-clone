@@ -72,6 +72,11 @@ public class CordovaPreferences {
         return defaultValue;
     }
 
+    // Added in 4.0.0
+    public boolean contains(String name) {
+        return getString(name, null) != null;
+    }
+
     public int getInteger(String name, int defaultValue) {
         name = name.toLowerCase(Locale.ENGLISH);
         String value = prefs.get(name);
@@ -133,6 +138,9 @@ public class CordovaPreferences {
             } else if (name.equals("splashscreen")) {
                 // Note: We should probably pass in the classname for the variable splash on splashscreen!
                 int resource = action.getResources().getIdentifier(value, "drawable", action.getClass().getPackage().getName());
+                if(resource == 0) {
+                    resource = action.getResources().getIdentifier(value, "drawable", action.getPackageName());
+                }
                 action.getIntent().putExtra(name, resource);
             }
             else if(name.equals("backgroundcolor")) {

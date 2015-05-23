@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="net.drshoggoth.supergemcrusherdeluxe" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="net.drshoggoth.SuperGemCrusherDeluxe" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <preference name="loglevel" value="DEBUG" />
+    <allow-intent href="market:*" />
     <name>Super Gem Crusher Deluxe</name>
     <description>
        The greatest gem swapping game ever built.
@@ -9,7 +10,17 @@
         Jeremy J. Brenner
     </author>
     <content src="index.html" />
-    <access origin="http://127.0.0.1*" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
     <preference name="Fullscreen" value="true" />
     <preference name="Orientation" value="portrait" />
+    <feature name="Whitelist">
+        <param name="android-package" value="org.apache.cordova.whitelist.WhitelistPlugin" />
+        <param name="onload" value="true" />
+    </feature>
 </widget>
